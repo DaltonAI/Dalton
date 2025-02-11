@@ -13,6 +13,20 @@
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
     let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
+    const scriptUrl = document.currentScript.src;
+    const urlParams = new URLSearchParams(new URL(scriptUrl).search);
+    const customerId = parseInt(urlParams.get("customer_id"));
+    SESSION_KEY += `_${urlParams.get("customer_id")}`;
+    let sessionId = null;
+
+    if (!customerId) {
+        console.log("No customer ID error.");
+        Promise.all([waitForDom])
+            .then(() => {
+                document.body.style.opacity = '1';
+            })
+        return;
+    }
 
     if (debugMode) {
         console.log("Debug mode enabled")
@@ -134,21 +148,6 @@
     });
 
 
-    const scriptUrl = document.currentScript.src;
-    const urlParams = new URLSearchParams(new URL(scriptUrl).search);
-    const customerId = parseInt(urlParams.get("customer_id"));
-    SESSION_KEY += `_${urlParams.get("customer_id")}`;
-    let sessionId = null;
-
-    if (!customerId) {
-        console.log("No customer ID error.");
-        Promise.all([waitForDom])
-            .then(() => {
-                document.body.style.opacity = '1';
-            })
-        return;
-    }
-
     const getSession = new Promise(resolve => {
         let session = getCookie(SESSION_KEY);
         if (session && !debugMode && !demoMode) {
@@ -169,21 +168,30 @@
         }
     });
 
-    function changeElementTextByContent(textToFind, newText) {
+    function changeElementTextByContent(selection, textToFind, newText) {
         // Find all elements in the document
-        const elements = document.querySelectorAll('*');
+        log(`Trying to replace ${textToFind} and -${newText}-`)
+
+        if (typeof newText !== "string")
+            return false
+
+        let elements = [];
+        if (selection) {
+            log("Got nodelist to replace text.")
+            for (const s of selection) {
+                elements.push(...s.querySelectorAll('*'));
+            }
+
+        } else {
+            elements = document.querySelectorAll('*');
+        }
         for (const element of elements) {
-            if (element.children.length < 2 && element.innerHTML.length < 200) {
-                const content = element.innerHTML.trim().toLowerCase()
-                if (debugMode) {
-                    console.log("-" + content + "-")
-                }
-                if (content === textToFind.toLowerCase()) {
-                    // Change the text content
-                    element.innerHTML = newText;
-                    log(`Text changed in element:`, element);
-                    return true; // Stop after the first match
-                }
+            console.log(element.innerHTML.trim().toLowerCase())
+            if (element.innerHTML.trim().toLowerCase() === textToFind.toLowerCase()) {
+                element.innerHTML = newText;
+                log(`Text changed in element: ${newText}`);
+                return true; // Stop after the first match
+
             }
         }
         console.warn(`No element found with the text: "${textToFind}"`);
@@ -200,10 +208,24 @@
 
 
     function handleTextBandit(experiment) {
+        let selection = null
+        if (experiment.bandit.content.query) {
+            let search = document.querySelectorAll(experiment.bandit.content.query);
+            log(`Matched ${search.length} element(s) with query ${experiment.bandit.content.query}`)
+            if (search.length === 0)
+                return false
+            if (!experiment.bandit.content.source) {
+                log(`Doing full replace of ${experiment.arm.text_content}`)
+                search[0].textContent = experiment.arm.text_content
+                return true
+            }
+            selection = search
+        }
         let matched = false;
         let result = false;
+
         for (let index = 0; index < experiment.bandit.content.source.length; ++index) {
-            result = changeElementTextByContent(experiment.bandit.content.source[index].k, experiment.arm.subs[index].v);
+            result = changeElementTextByContent(selection, experiment.bandit.content.source[index].k, experiment.arm.subs[index].v);
             matched = matched || result;
         }
         return matched;
@@ -296,7 +318,9 @@
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
             log(`Filtered ${session.data.length} experiment(s) for page ${window.location.pathname}`)
-            if (session.data) runExperiments(session.data)
+            if (session.data) {
+                runExperiments(session.data)
+            }
             removeStyle(hidingStyle)
             if (!demoMode && !noTracking)
                 startTracking(customerId, sessionId, session.ids, debugMode);
