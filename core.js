@@ -142,7 +142,7 @@
             console.log("existing session")
             resolve(session);
         } else {
-            fetch("https://maniac-functions.vercel.app/api/session", {
+            fetch("https://quicklift-tracker.vercel.app/api/session", {
                 method: "POST", body: JSON.stringify({customer_id: customerId})
             }).then(response => response.json())
                 .then(r => {
@@ -292,7 +292,7 @@
 
 function startTracking(customerId, sessionId, Ids, debugMode) {
     const EVENTS = []; // Local array to store events
-    const API_ENDPOINT = "https://maniac-functions.vercel.app/api/track"; // Replace with your API endpoint
+    const API_ENDPOINT = "https://quicklift-tracker.vercel.app/api/track"; // Replace with your API endpoint
 
     // Helper function to track events
     function trackEvent(eventType, eventData) {
