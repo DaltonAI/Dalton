@@ -238,7 +238,8 @@
         for (let sectionLocation of experiment.arm.sections) {
             let sections = document.querySelectorAll('section');
             for (let section of sections) {
-                if (section.id.includes(sectionLocation.id)) {
+                log(`Finding section with ${sectionLocation.key}-> ${sectionLocation.value}`)
+                if (section.getAttribute(sectionLocation.key).includes(sectionLocation.value)) {
                     if (main.children[sectionLocation.index]) {
                         // Move the section to the correct position in the main element
                         main.insertBefore(section, main.children[sectionLocation.index]);
