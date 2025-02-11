@@ -286,6 +286,7 @@
                 removeStyle(hidingStyle)
                 return
             }
+
             log(session);
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
@@ -356,7 +357,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
     let scrollTimeout = null;
 
 
-    function addToCartListener(event) {
+    function addToCartListener() {
         // Select all forms with the action '/cart/add'
         const forms = document.querySelectorAll('form[action="/cart/add"]');
         const pageUrl = window.location.pathname;
@@ -367,7 +368,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
             const addToCartButton = form.querySelector('button[type="submit"], input[type="submit"]');
 
             if (addToCartButton) {
-                addToCartButton.addEventListener("click", function (event) {
+                addToCartButton.addEventListener("click", function () {
                     // Prevent the default action just for our custom tracking (but don't stop form submission)
                     //event.preventDefault();
 
@@ -393,7 +394,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         const wixAddToCart = document.querySelectorAll('button[data-hook*="add-to-cart"], button[data-hook*="buy-now-button"]');
         if (wixAddToCart) {
             console.log("Detected WIX add to cart buttons")
-            wixAddToCart.forEach(addToCartButton => addToCartButton.addEventListener("click", function (event) {
+            wixAddToCart.forEach(addToCartButton => addToCartButton.addEventListener("click", function () {
                 trackEvent("add_to_cart", {page_url: pageUrl});
             }))
         }
@@ -403,7 +404,6 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         const {pageX: x, pageY: y, target} = e;
 
         const clickableElement = target.closest("button, a") || target;
-        const href = clickableElement.href;
         const targetDetails = target.tagName.toLowerCase();
         const pageUrl = window.location.pathname;
         // Element-specific details
@@ -421,7 +421,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
     }
 
 
-    function scrollListener(e) {
+    function scrollListener() {
         if (scrollTimeout) {
             clearTimeout(scrollTimeout);
         }
