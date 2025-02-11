@@ -307,7 +307,7 @@
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
         .then(([session]) => {
-            if (!session || !session.customer.enabled) {
+            if (!session || (!session.customer.enabled && !debugMode)) {
                 log(session);
                 log("Stopping AB test script.");
                 removeStyle(hidingStyle)
