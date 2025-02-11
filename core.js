@@ -5,12 +5,13 @@
     document._ABCurrentPage = currentPage;
 
     console.log("Initializing AB test script...")
-    let SESSION_KEY = 'maniac_session';
+    let SESSION_KEY = 'quicklift_session';
     const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
     const queryString = window.location.search;
     const urlParams2 = new URLSearchParams(queryString);
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
+    let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
 
     setTimeout(() => {
         // applyStyles('.hide-maniac', 'opacity: 1 !important;');
@@ -137,7 +138,7 @@
 
     const getSession = new Promise(resolve => {
         let session = getCookie(SESSION_KEY);
-        if (session && !debugMode) {
+        if (session && !debugMode && !demoMode) {
             console.log("existing session")
             resolve(session);
         } else {
@@ -278,7 +279,8 @@
             log(`Filtered ${session.data.length} experiment(s) for page ${window.location.pathname}`)
             if (session.data) runExperiments(session.data)
             removeStyle(hidingStyle)
-            startTracking(customerId, sessionId, session.ids, debugMode);
+            if (!demoMode)
+                startTracking(customerId, sessionId, session.ids, debugMode);
             console.log("Done.")
         })
         .catch(err => {
@@ -298,7 +300,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         const event = {
             session_id: sessionId, event_type: eventType, event_data: eventData, timestamp: new Date().toISOString(),
         }
-        if (EVENTS.length > 0 && EVENTS[-1] === event ){
+        if (EVENTS.length > 0 && EVENTS[-1] === event) {
             console.log("Detected duplicate event.")
         }
         EVENTS.push(event);
@@ -424,11 +426,10 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
 
     console.log(document.ab_listeners)
 
-    if (document._IS_TRACKING){
+    if (document._IS_TRACKING) {
 
 
-    }
-    else{
+    } else {
         document._IS_TRACKING = true
         document.ab_listeners = []
         document.addEventListener("click", clickListener);
@@ -444,7 +445,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
     document.ab_listeners = []
 
     document.addEventListener("DOMContentLoaded", addToCartListener);
-    if(document.readyState === "complete") {
+    if (document.readyState === "complete") {
         addToCartListener(null)
     }
 
