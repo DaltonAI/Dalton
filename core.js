@@ -14,15 +14,15 @@
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
     let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
 
-    if(debugMode){
+    if (debugMode) {
         console.log("Debug mode enabled")
     }
 
-    if(demoMode){
+    if (demoMode) {
         console.log("Demo mode enabled")
     }
 
-    if(noTracking){
+    if (noTracking) {
         console.log("Not tracking sessions")
     }
 
@@ -176,7 +176,7 @@
             if (element.children.length < 2 && element.innerHTML.length < 200) {
                 const content = element.innerHTML.trim().toLowerCase()
                 if (debugMode) {
-                    console.log(content, element.innerHTML)
+                    console.log("-" + content + "-")
                 }
                 if (content === textToFind.toLowerCase()) {
                     // Change the text content
