@@ -243,7 +243,7 @@
                     let parent = section.parentElement
                     if (parent.children[sectionLocation.index]) {
                         // Move the section to the correct position in the main element
-                        parent.insertBefore(section, main.children[sectionLocation.index]);
+                        parent.insertBefore(section, parent.children[sectionLocation.index]);
                     } else {
                         // If the target index is out of bounds, append the section at the end
                         parent.appendChild(section);
