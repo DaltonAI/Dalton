@@ -233,19 +233,19 @@
     }
 
     function handleSectionBandit(experiment) {
-        const main = document.querySelectorAll('main')[0];
         log(experiment.arm.sections)
         for (let sectionLocation of experiment.arm.sections) {
             let sections = document.querySelectorAll('section');
             for (let section of sections) {
                 log(`Finding section with ${sectionLocation.key}-> ${sectionLocation.value}`)
                 if (section.getAttribute(sectionLocation.key).includes(sectionLocation.value)) {
-                    if (main.children[sectionLocation.index]) {
+                    let parent = section.parentElement
+                    if (parent.children[sectionLocation.index]) {
                         // Move the section to the correct position in the main element
-                        main.insertBefore(section, main.children[sectionLocation.index]);
+                        parent.insertBefore(section, main.children[sectionLocation.index]);
                     } else {
                         // If the target index is out of bounds, append the section at the end
-                        main.appendChild(section);
+                        parent.appendChild(section);
                     }
                     return true
                 }
