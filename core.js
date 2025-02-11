@@ -18,6 +18,10 @@
         console.log("Debug mode enabled")
     }
 
+    if(demoMode){
+        console.log("Demo mode enabled")
+    }
+
     if(noTracking){
         console.log("Not tracking sessions")
     }
