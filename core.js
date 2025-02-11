@@ -12,7 +12,15 @@
     const urlParams2 = new URLSearchParams(queryString);
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
-    let noTracing = parseInt(urlParams2.get('disable_tracing')) || 0;
+    let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
+
+    if(debugMode){
+        console.log("Debug mode enabled")
+    }
+
+    if(noTracking){
+        console.log("Not tracking sessions")
+    }
 
     setTimeout(() => {
         // applyStyles('.hide-maniac', 'opacity: 1 !important;');
@@ -284,7 +292,7 @@
             log(`Filtered ${session.data.length} experiment(s) for page ${window.location.pathname}`)
             if (session.data) runExperiments(session.data)
             removeStyle(hidingStyle)
-            if (!demoMode && !noTracing)
+            if (!demoMode && !noTracking)
                 startTracking(customerId, sessionId, session.ids, debugMode);
             console.log("Done.")
         })
