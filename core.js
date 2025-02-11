@@ -161,7 +161,11 @@
         const elements = document.querySelectorAll('*');
         for (const element of elements) {
             if (element.children.length < 2) {
-                if (element.innerHTML.trim().toLowerCase() === textToFind.toLowerCase()) {
+                const content = element.innerHTML.replace(/\u00A0/g, ' ').trim().toLowerCase()
+                if (debugMode) {
+                    console.log(content, element.innerHTML)
+                }
+                if (content === textToFind.toLowerCase()) {
                     // Change the text content
                     element.innerHTML = newText;
                     log(`Text changed in element:`, element);
