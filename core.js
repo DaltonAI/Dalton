@@ -173,8 +173,8 @@
         // Find all elements in the document
         const elements = document.querySelectorAll('*');
         for (const element of elements) {
-            if (element.children.length < 2) {
-                const content = element.innerHTML.replace(/\u00A0/g, ' ').trim().toLowerCase()
+            if (element.children.length < 2 && element.innerHTML.length < 200) {
+                const content = element.innerHTML.trim().toLowerCase()
                 if (debugMode) {
                     console.log(content, element.innerHTML)
                 }
