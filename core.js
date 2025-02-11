@@ -235,9 +235,10 @@
     function handleSectionBandit(experiment) {
         log(experiment.arm.sections)
         for (let sectionLocation of experiment.arm.sections) {
+            log(`Finding section with ${sectionLocation.key}-> ${sectionLocation.value}`)
             let sections = document.querySelectorAll('section');
             for (let section of sections) {
-                log(`Finding section with ${sectionLocation.key}-> ${sectionLocation.value}`)
+                log(section.getAttribute(sectionLocation.key))
                 if (section.getAttribute(sectionLocation.key).includes(sectionLocation.value)) {
                     let parent = section.parentElement
                     if (parent.children[sectionLocation.index]) {
