@@ -1,4 +1,5 @@
 (function () {
+
     // If navigating to the same page, don't re-run
     let currentPage = window.location.pathname;
     if (document._ABCurrentPage === currentPage) return;
@@ -40,10 +41,6 @@
         console.log("Not tracking sessions")
     }
 
-    setTimeout(() => {
-        // applyStyles('.hide-maniac', 'opacity: 1 !important;');
-    }, 1000);
-
     const botRegex = new RegExp(" daum[ /]| deusu/| yadirectfetcher|(?:^|[^g])news(?!sapphire)|" + "google(?!(app|/google| pixel))|bot|spider|crawl|http|lighthouse|screenshot", "i");
 
     const simpleBotRegex = /bot|spider|crawl|http|lighthouse|screenshot/i;
@@ -71,6 +68,12 @@
     }
 
     let hidingStyle = applyStyles('.hide-maniac', 'opacity: 0;');
+
+    // fallback function
+    setTimeout(() => {
+        removeStyle(hidingStyle);
+    }, 1000);
+
     const observer = new MutationObserver(() => {
 
 
@@ -239,7 +242,7 @@
             let sections = document.querySelectorAll('section');
             for (let section of sections) {
                 log(section.getAttribute(sectionLocation.key))
-                if (section.getAttribute(sectionLocation.key).includes(sectionLocation.value)) {
+                if (section.getAttribute(sectionLocation.key) && section.getAttribute(sectionLocation.key).includes(sectionLocation.value)) {
                     let parent = section.parentElement
                     if (parent.children[sectionLocation.index]) {
                         // Move the section to the correct position in the main element
