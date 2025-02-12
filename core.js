@@ -218,9 +218,16 @@
             if (search.length === 0)
                 return false
             if (!experiment.bandit.content.source) {
-                log(`Doing full replace of ${experiment.arm.text_content}`)
-                search[0].textContent = experiment.arm.text_content
-                return true
+                if (experiment.arm.text_content) {
+                    log(`Doing full replace of ${experiment.arm.text_content}`)
+                    search[0].textContent = experiment.arm.text_content
+                    return true
+                }
+                if (experiment.arm.inner_html) {
+                    log(`Doing full replace of ${experiment.arm.inner_html}`)
+                    search[0].innerHTML = experiment.arm.inner_html
+                    return true
+                }
             }
             selection = search
         }
@@ -240,7 +247,7 @@
         for (let sectionLocation of experiment.arm.sections) {
             log(`Finding section with ${sectionLocation.query}`)
             let section = document.querySelector(sectionLocation.query);
-            if(section){
+            if (section) {
                 let parent = section.parentElement
                 if (parent.children[sectionLocation.index]) {
                     // Move the section to the correct position in the main element
