@@ -6,7 +6,7 @@
     document._ABCurrentPage = currentPage;
 
     console.log("Initializing AB test script...")
-    let SESSION_KEY = 'quicklift_session';
+    let SESSION_KEY = 'dalton_session';
     const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
     const queryString = window.location.search;
@@ -157,7 +157,7 @@
             console.log("existing session")
             resolve(session);
         } else {
-            fetch("https://quicklift-tracker.vercel.app/api/session", {
+            fetch("https://track.getdalton.com/api/session", {
                 method: "POST", body: JSON.stringify({customer_id: customerId})
             }).then(response => response.json())
                 .then(r => {
@@ -343,7 +343,7 @@
 
 function startTracking(customerId, sessionId, Ids, debugMode) {
     const EVENTS = []; // Local array to store events
-    const API_ENDPOINT = "https://quicklift-tracker.vercel.app/api/track"; // Replace with your API endpoint
+    const API_ENDPOINT = "https://track.getdalton.com/api/track"; // Replace with your API endpoint
 
     // Helper function to track events
     function trackEvent(eventType, eventData) {
