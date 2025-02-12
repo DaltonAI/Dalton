@@ -218,9 +218,16 @@
             if (search.length === 0)
                 return false
             if (!experiment.bandit.content.source) {
-                log(`Doing full replace of ${experiment.arm.text_content}`)
-                search[0].textContent = experiment.arm.text_content
-                return true
+                if (experiment.arm.text_content) {
+                    log(`Doing full replace of ${experiment.arm.text_content}`)
+                    search[0].textContent = experiment.arm.text_content
+                    return true
+                }
+                if (experiment.arm.inner_html) {
+                    log(`Doing full replace of ${experiment.arm.inner_html}`)
+                    search[0].innerHTML = experiment.arm.inner_html
+                    return true
+                }
             }
             selection = search
         }
@@ -238,22 +245,18 @@
     function handleSectionBandit(experiment) {
         log(experiment.arm.sections)
         for (let sectionLocation of experiment.arm.sections) {
-            log(`Finding section with ${sectionLocation.key}-> ${sectionLocation.value}`)
-            let sections = document.querySelectorAll('section');
-            for (let section of sections) {
-                log(section.getAttribute(sectionLocation.key))
-                if (section.getAttribute(sectionLocation.key) && section.getAttribute(sectionLocation.key).includes(sectionLocation.value)) {
-                    let parent = section.parentElement
-                    if (parent.children[sectionLocation.index]) {
-                        // Move the section to the correct position in the main element
-                        parent.insertBefore(section, parent.children[sectionLocation.index]);
-                    } else {
-                        // If the target index is out of bounds, append the section at the end
-                        parent.appendChild(section);
-                    }
-                    return true
+            log(`Finding section with ${sectionLocation.query}`)
+            let section = document.querySelector(sectionLocation.query);
+            if (section) {
+                let parent = section.parentElement
+                if (parent.children[sectionLocation.index]) {
+                    // Move the section to the correct position in the main element
+                    parent.insertBefore(section, parent.children[sectionLocation.index]);
+                } else {
+                    // If the target index is out of bounds, append the section at the end
+                    parent.appendChild(section);
                 }
-
+                return true
             }
         }
         return false;
