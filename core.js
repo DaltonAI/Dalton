@@ -238,22 +238,18 @@
     function handleSectionBandit(experiment) {
         log(experiment.arm.sections)
         for (let sectionLocation of experiment.arm.sections) {
-            log(`Finding section with ${sectionLocation.key}-> ${sectionLocation.value}`)
-            let sections = document.querySelectorAll('section');
-            for (let section of sections) {
-                log(section.getAttribute(sectionLocation.key))
-                if (section.getAttribute(sectionLocation.key) && section.getAttribute(sectionLocation.key).includes(sectionLocation.value)) {
-                    let parent = section.parentElement
-                    if (parent.children[sectionLocation.index]) {
-                        // Move the section to the correct position in the main element
-                        parent.insertBefore(section, parent.children[sectionLocation.index]);
-                    } else {
-                        // If the target index is out of bounds, append the section at the end
-                        parent.appendChild(section);
-                    }
-                    return true
+            log(`Finding section with ${sectionLocation.query}`)
+            let section = document.querySelector(sectionLocation.query);
+            if(section){
+                let parent = section.parentElement
+                if (parent.children[sectionLocation.index]) {
+                    // Move the section to the correct position in the main element
+                    parent.insertBefore(section, parent.children[sectionLocation.index]);
+                } else {
+                    // If the target index is out of bounds, append the section at the end
+                    parent.appendChild(section);
                 }
-
+                return true
             }
         }
         return false;
