@@ -6,6 +6,7 @@
     document._ABCurrentPage = currentPage;
     console.log("Initializing AB test script...")
     let SESSION_KEY = 'dalton_session';
+    let DEVICE_KEY = "dalton_device"
     const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
     const queryString = window.location.search;
@@ -134,20 +135,11 @@
         document.cookie = `${name}=${encodedData}; max-age=${maxAge}; path=/; secure; samesite=strict`;
     }
 
-    // Wait for the DOM to be minimally ready
-    const waitForDom = new Promise(resolve => {
-        if (document.body) {
-            resolve(); // Body is already available
-        } else {
-            const observer = new MutationObserver(() => {
-                if (document.body) {
-                    observer.disconnect();
-                    resolve(); // Body is now available
-                }
-            });
-            observer.observe(document.documentElement, {childList: true});
-        }
-    });
+    let deviceId = getCookie(DEVICE_KEY);
+    if (!deviceId) {
+        deviceId = crypto.randomUUID();
+        setCookie(DEVICE_KEY, deviceId, 100 * 24 * 60 * 60 * 1000)
+    }
 
 
     const getSession = new Promise(resolve => {
@@ -169,6 +161,7 @@
 
         }
     });
+
 
     function changeElementTextByContent(selection, textToFind, newText) {
         // Find all elements in the document
@@ -311,6 +304,8 @@
         experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
     }
 
+    window.dalton = {deviceId: deviceId, customerId: customerId, sessionId: sessionId, debugMode: debugMode }
+
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
         .then(([session]) => {
@@ -320,7 +315,7 @@
                 removeStyle(hidingStyle)
                 return
             }
-
+            window.dalton.data = session.ids
             log(session);
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
@@ -340,7 +335,11 @@
 
 })();
 
-function startTracking(customerId, sessionId, Ids, debugMode) {
+function startTracking() {
+    const customerId = window.dalton.customerId
+    const sessionId = window.dalton.customerId
+    const debugMode = window.dalton.debugMode
+
     const EVENTS = []; // Local array to store events
     const API_ENDPOINT = "https://track.getdalton.com/api/track"; // Replace with your API endpoint
 
@@ -425,9 +424,9 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
                     events: EVENTS,
                     session_id: sessionId,
                     customer_id: customerId,
-                    browser: browser,
-                    deviceType: deviceType,
-                    ids: Ids,
+                    device_type: deviceType,
+                    device_id: window.dalton.deviceId,
+                    ids: window.dalton.data,
                     session_info: {
                         referrer: document.referrer || "direct",
                         viewportWidth: window.innerWidth,
