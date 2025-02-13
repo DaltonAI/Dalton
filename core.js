@@ -67,7 +67,7 @@
         head.removeChild(style);
     }
 
-    let hidingStyle = applyStyles('.hide-maniac', 'opacity: 0;');
+    let hidingStyle = applyStyles('.dalton-no-flicker', 'opacity: 0;');
 
     // fallback function
     setTimeout(() => {
@@ -85,7 +85,7 @@
         });
 
         for (let element of filtered) {
-            element.classList.add("hide-maniac");
+            element.classList.add("dalton-no-flicker");
         }
     });
     observer.observe(document.documentElement, {childList: true, subtree: true});
