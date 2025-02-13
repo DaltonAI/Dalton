@@ -4,8 +4,6 @@
     let currentPage = window.location.pathname;
     if (document._ABCurrentPage === currentPage) return;
     document._ABCurrentPage = currentPage;
-
-
     console.log("Initializing AB test script...")
     let SESSION_KEY = 'dalton_session';
     const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
