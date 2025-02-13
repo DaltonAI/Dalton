@@ -1,0 +1,16 @@
+name: Purge jsDelivr Cache for core.js
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  purge-jsdelivr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Purge jsDelivr Cache
+        run: |
+          FILE_URL="https://purge.jsdelivr.net/gh/DaltonAI/Dalton@develop/core.js"
+          echo "Purging: $FILE_URL"
+          curl -X GET "$FILE_URL"

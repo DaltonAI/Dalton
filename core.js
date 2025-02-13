@@ -357,6 +357,55 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         EVENTS.push(event);
     }
 
+    function detectBrowserAndDevice(userAgent, sw, sh) {
+        // Browser detection rules
+        const browsers = [
+            {name: "Chrome", regex: /Chrome|CriOS/},
+            {name: "Safari", regex: /Safari/},
+            {name: "Firefox", regex: /Firefox/},
+            {name: "Edge", regex: /Edg/},
+            {name: "Opera", regex: /Opera|OPR/},
+            {name: "Samsung Internet", regex: /SamsungBrowser/},
+            {name: "IE", regex: /MSIE|Trident/}
+        ];
+
+        // Detect browser
+        let browserName = browsers.find(({regex}) => regex.test(userAgent))?.name || null;
+
+        // Device type breakpoints
+        const breakpoints = {
+            mobile: {maxWidth: 767},
+            tablet: {minWidth: 768, maxWidth: 1024},
+            desktop: {minWidth: 1025}
+        };
+
+        // Parse screen width
+        const screenWidth = parseInt(sw, 10);
+        const screenHeight = parseInt(sh, 10);
+
+        // Determine device type
+        let deviceType = null;
+        if (!isNaN(screenWidth) && !isNaN(screenHeight)) {
+            if (screenWidth <= breakpoints.mobile.maxWidth) {
+                deviceType = "mobile";
+            } else if (screenWidth >= breakpoints.tablet.minWidth && screenWidth <= breakpoints.tablet.maxWidth) {
+                deviceType = "tablet";
+            } else if (screenWidth >= breakpoints.desktop.minWidth) {
+                deviceType = "desktop";
+            }
+        }
+
+        return {
+            browser: browserName,
+            deviceType
+        };
+    }
+
+    const {
+        browser,
+        deviceType
+    } = detectBrowserAndDevice(window.navigator.userAgent, window.screen.height, window.screen.width)
+
     const sendData = async () => {
         if (debugMode) {
             return
@@ -371,13 +420,25 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         }
         if (EVENTS.length > 0) {
             try {
+
                 // Send batch data to the backend
                 const analytics = JSON.stringify({
                     events: EVENTS,
                     session_id: sessionId,
                     customer_id: customerId,
+                    browser: browser,
+                    deviceType: deviceType,
                     ids: Ids,
-                    agent: window.navigator.userAgent,
+                    session_info: {
+                        referrer: document.referrer || "direct",
+                        viewportWidth: window.innerWidth,
+                        viewportHeight: window.innerHeight,
+                        sh: window.screen.height,
+                        sw: window.screen.width,
+                        language: window.navigator?.language,
+                        agent: window.navigator?.userAgent,
+                    }
+
                 });
                 navigator.sendBeacon(API_ENDPOINT, analytics);
 
@@ -488,7 +549,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         document.ab_listeners.push(clickListener)
     }
 
-    setInterval(sendData, 3000); // Send data every 3 seconds
+    setInterval(sendData, 2000); // Send data every 3 seconds
 
     trackEvent("page_view", {page_url: window.location.pathname});
 
