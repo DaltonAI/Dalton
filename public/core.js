@@ -330,7 +330,7 @@
             }
             removeStyle(hidingStyle)
             if (!demoMode && !noTracking)
-                startTracking(customerId, sessionId, session.ids, debugMode);
+                startTracking();
             console.log("Done.")
         })
         .catch(err => {
@@ -423,9 +423,7 @@ function startTracking() {
     }
 
     const sendData = async () => {
-        if (debugMode) {
-            return
-        }
+
         if (!checkConsent()) {
             console.log("Not sending because missing user consent.")
         }
@@ -437,6 +435,7 @@ function startTracking() {
             })
             window.sessionEvents_ = [];
         }
+
         if (EVENTS.length > 0) {
             try {
 
@@ -460,6 +459,10 @@ function startTracking() {
                     }
 
                 });
+                if (debugMode) {
+                    console.log("sending events",analytics )
+                    return
+                }
                 navigator.sendBeacon(API_ENDPOINT, analytics);
 
                 // Clear the events array after successful transmission
