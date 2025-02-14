@@ -601,6 +601,7 @@ function startTracking() {
     setInterval(sendData, 5000); // Send data every 4 seconds
 
     trackEvent("page_view", {page_url: window.location.pathname});
+    sendData().then()
 
     document.ab_listeners = []
 
