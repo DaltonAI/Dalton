@@ -4,9 +4,9 @@
     let currentPage = window.location.pathname;
     if (document._ABCurrentPage === currentPage) return;
     document._ABCurrentPage = currentPage;
-
     console.log("Initializing AB test script...")
     let SESSION_KEY = 'dalton_session';
+    let DEVICE_KEY = "dalton_device"
     const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
     const queryString = window.location.search;
@@ -67,7 +67,7 @@
         head.removeChild(style);
     }
 
-    let hidingStyle = applyStyles('.hide-maniac', 'opacity: 0;');
+    let hidingStyle = applyStyles('.dalton-no-flicker', 'opacity: 0;');
 
     // fallback function
     setTimeout(() => {
@@ -85,7 +85,7 @@
         });
 
         for (let element of filtered) {
-            element.classList.add("hide-maniac");
+            element.classList.add("dalton-no-flicker");
         }
     });
     observer.observe(document.documentElement, {childList: true, subtree: true});
@@ -135,20 +135,11 @@
         document.cookie = `${name}=${encodedData}; max-age=${maxAge}; path=/; secure; samesite=strict`;
     }
 
-    // Wait for the DOM to be minimally ready
-    const waitForDom = new Promise(resolve => {
-        if (document.body) {
-            resolve(); // Body is already available
-        } else {
-            const observer = new MutationObserver(() => {
-                if (document.body) {
-                    observer.disconnect();
-                    resolve(); // Body is now available
-                }
-            });
-            observer.observe(document.documentElement, {childList: true});
-        }
-    });
+    let deviceId = getCookie(DEVICE_KEY);
+    if (!deviceId) {
+        deviceId = crypto.randomUUID();
+        //setCookie(DEVICE_KEY, deviceId, 100 * 24 * 60 * 60 * 1000)
+    }
 
 
     const getSession = new Promise(resolve => {
@@ -161,15 +152,15 @@
                 method: "POST", body: JSON.stringify({customer_id: customerId})
             }).then(response => response.json())
                 .then(r => {
-                    setCookie(SESSION_KEY, r, SESSION_TIMEOUT);
                     resolve(r);
                 }).catch(() => {
-                console.log("Could not create new session.");
+                console.error("Could not create new session.");
                 resolve();
             });
 
         }
     });
+
 
     function changeElementTextByContent(selection, textToFind, newText) {
         // Find all elements in the document
@@ -189,7 +180,6 @@
             elements = document.querySelectorAll('*');
         }
         for (const element of elements) {
-            console.log(element.innerHTML.trim().toLowerCase())
             if (element.innerHTML.trim().toLowerCase() === textToFind.toLowerCase()) {
                 element.innerHTML = newText;
                 log(`Text changed in element: ${newText}`);
@@ -293,7 +283,7 @@
                 return handleTextBandit(experiment)
             }
         } catch (err) {
-            console.log(err)
+            console.error(err)
             return false;
         }
     }
@@ -302,8 +292,10 @@
         experiments = experiments.map(v => ({...v, done: false}))
         const observer = new MutationObserver(() => {
             experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
-            console.log(experiments.filter(exp => !exp.done).length)
+            window.dalton.failed_bandits = experiments.filter(exp => !exp.done).map(exp => exp.bandit.id)
+            log(window)
             if (experiments.filter(exp => !exp.done).length === 0) {
+                window.dalton.failed_bandits = null
                 log("Done with all experiments.")
                 observer.disconnect();
             }
@@ -311,6 +303,41 @@
         observer.observe(document.documentElement, {childList: true, subtree: true});
         experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
     }
+
+    window.dalton = {
+        deviceId: deviceId, customerId: customerId,
+        debugMode: debugMode, failed_bandits: null, consent: false
+    }
+
+    function checkConsent() {
+        try {
+            if (!window.dataLayer) return true;
+            for (let ev of window.dataLayer) {
+                if (ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
+            }
+            return false
+        } catch {
+            console.log("something went wrong when getting consent.")
+            return true;
+        }
+
+    }
+
+    function setCookies() {
+        if (checkConsent()) {
+            if (!getCookie(SESSION_KEY) && window.dalton.session) {
+                console.log("setting session cookie.")
+                setCookie(SESSION_KEY, window.dalton.session, SESSION_TIMEOUT);
+            }
+            if (!getCookie(DEVICE_KEY) && window.dalton.deviceId) {
+                console.log("setting device cookie.")
+                setCookie(DEVICE_KEY, window.dalton.deviceId, 100 * 24 * 60 * 60 * 1000);
+            }
+            clearInterval(checker)
+        }
+    }
+
+    let checker  = setInterval(setCookies, 1000);
 
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
@@ -321,7 +348,9 @@
                 removeStyle(hidingStyle)
                 return
             }
-
+            window.dalton.data = session.ids
+            window.dalton.sessionId = session.session_id
+            window.dalton.session = session
             log(session);
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
@@ -331,7 +360,7 @@
             }
             removeStyle(hidingStyle)
             if (!demoMode && !noTracking)
-                startTracking(customerId, sessionId, session.ids, debugMode);
+                startTracking();
             console.log("Done.")
         })
         .catch(err => {
@@ -341,13 +370,16 @@
 
 })();
 
-function startTracking(customerId, sessionId, Ids, debugMode) {
+function startTracking() {
+    const customerId = window.dalton.customerId
+    const sessionId = window.dalton.sessionId
+    const debugMode = window.dalton.debugMode
+
     const EVENTS = []; // Local array to store events
     const API_ENDPOINT = "https://track.getdalton.com/api/track"; // Replace with your API endpoint
 
     // Helper function to track events
     function trackEvent(eventType, eventData) {
-        console.log(eventType, eventData);
         const event = {
             session_id: sessionId, event_type: eventType, event_data: eventData, timestamp: new Date().toISOString(),
         }
@@ -357,7 +389,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         EVENTS.push(event);
     }
 
-    function detectBrowserAndDevice(userAgent, sw, sh) {
+    function detectBrowserAndDevice(userAgent, sh, sw) {
         // Browser detection rules
         const browsers = [
             {name: "Chrome", regex: /Chrome|CriOS/},
@@ -382,7 +414,6 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         // Parse screen width
         const screenWidth = parseInt(sw, 10);
         const screenHeight = parseInt(sh, 10);
-
         // Determine device type
         let deviceType = null;
         if (!isNaN(screenWidth) && !isNaN(screenHeight)) {
@@ -407,9 +438,6 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
     } = detectBrowserAndDevice(window.navigator.userAgent, window.screen.height, window.screen.width)
 
     const sendData = async () => {
-        if (debugMode) {
-            return
-        }
         if (window.sessionEvents_) {
             window.sessionEvents_.forEach(event => {
                 EVENTS.push({
@@ -418,6 +446,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
             })
             window.sessionEvents_ = [];
         }
+
         if (EVENTS.length > 0) {
             try {
 
@@ -426,9 +455,10 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
                     events: EVENTS,
                     session_id: sessionId,
                     customer_id: customerId,
-                    browser: browser,
-                    deviceType: deviceType,
-                    ids: Ids,
+                    device_type: deviceType,
+                    device_id: window.dalton.deviceId,
+                    failures: window.dalton.failed_bandits,
+                    ids: window.dalton.data,
                     session_info: {
                         referrer: document.referrer || "direct",
                         viewportWidth: window.innerWidth,
@@ -440,6 +470,10 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
                     }
 
                 });
+                if (debugMode) {
+                    console.log("sending events", analytics)
+                    return
+                }
                 navigator.sendBeacon(API_ENDPOINT, analytics);
 
                 // Clear the events array after successful transmission
@@ -549,7 +583,7 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
         document.ab_listeners.push(clickListener)
     }
 
-    setInterval(sendData, 2000); // Send data every 3 seconds
+    setInterval(sendData, 5000); // Send data every 4 seconds
 
     trackEvent("page_view", {page_url: window.location.pathname});
 
@@ -562,6 +596,8 @@ function startTracking(customerId, sessionId, Ids, debugMode) {
 
     window.removeEventListener("beforeunload", sendData);
     window.addEventListener("beforeunload", sendData);
+    window.removeEventListener("visibilitychange ", sendData);
+    window.addEventListener("visibilitychange ", sendData);
     document.ab_listeners.push(sendData)
 
 
