@@ -293,7 +293,7 @@
         experiments = experiments.map(v => ({...v, done: false}))
         const observer = new MutationObserver(() => {
             experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
-            window.dalton.failed_bandits = experiments.filter(exp => !exp.done).length
+            window.dalton.failed_bandits = experiments.filter(exp => !exp.done).map(exp => exp.bandit.id)
             log(window)
             if (experiments.filter(exp => !exp.done).length === 0) {
                 window.dalton.failed_bandits = null
