@@ -50,36 +50,6 @@
         !debugMode || console.debug(statement)
     }
 
-    function generateSessionID() {
-        // Non-personal attributes that will be part of the session ID
-        const nav = window.navigator;
-        const screen = window.screen;
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const randomPart = Math.random().toString(36).substring(2, 15); // Random string part for uniqueness
-        const timestamp = Date.now(); // Timestamp for uniqueness
-
-        // Combine the attributes to create a unique, temporary session ID
-        const rawSessionID = [
-            nav.userAgent, // Browser user agent (not personal)
-            screen.width,  // Screen width
-            screen.height, // Screen height
-            timezone,      // Timezone
-            timestamp,     // Current timestamp
-            randomPart     // Random value to avoid predictable IDs
-        ].join('-'); // Join parts with hyphen
-
-        // Generate a pseudo-UUID style session ID (looks like a UUID)
-        const pseudoUUID = rawSessionID
-            .split('-')
-            .map(str => str.substring(0, 8))  // Limit each part to 8 characters
-            .join('-'); // Join again with hyphen
-
-        return pseudoUUID;
-    }
-
-    console.log(generateSessionID())
-    return
-
     function applyStyles(selector, style) {
         const styleElement = document.createElement("style");
         styleElement.innerHTML = `${selector} { ${style} }`;
@@ -168,7 +138,7 @@
     let deviceId = getCookie(DEVICE_KEY);
     if (!deviceId) {
         deviceId = crypto.randomUUID();
-        setCookie(DEVICE_KEY, deviceId, 100 * 24 * 60 * 60 * 1000)
+        //setCookie(DEVICE_KEY, deviceId, 100 * 24 * 60 * 60 * 1000)
     }
 
 
@@ -182,7 +152,6 @@
                 method: "POST", body: JSON.stringify({customer_id: customerId})
             }).then(response => response.json())
                 .then(r => {
-                    setCookie(SESSION_KEY, r, SESSION_TIMEOUT);
                     resolve(r);
                 }).catch(() => {
                 console.error("Could not create new session.");
@@ -340,6 +309,35 @@
         debugMode: debugMode, failed_bandits: null
     }
 
+    function checkConsent() {
+        try {
+            if (!window.dataLayer) return true;
+            for (let ev of window.dataLayer) {
+                if (ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
+            }
+            return false
+        } catch {
+            console.log("something went wrong when getting consent.")
+            return true;
+        }
+
+    }
+
+    function setCookies() {
+        if (checkConsent()) {
+            if (!getCookie(SESSION_KEY) && window.dalton.session) {
+                console.log("setting session cookie.")
+                setCookie(SESSION_KEY, window.dalton.session, SESSION_TIMEOUT);
+            }
+            if (!getCookie(DEVICE_KEY) && window.dalton.deviceId) {
+                console.log("setting device cookie.")
+                setCookie(DEVICE_KEY, window.dalton.deviceId, 100 * 24 * 60 * 60 * 1000);
+            }
+        }
+    }
+
+    setInterval(setCookies, 1000);
+
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
         .then(([session]) => {
@@ -351,6 +349,7 @@
             }
             window.dalton.data = session.ids
             window.dalton.sessionId = session.session_id
+            window.dalton.session = session
             log(session);
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
@@ -437,25 +436,7 @@ function startTracking() {
         deviceType
     } = detectBrowserAndDevice(window.navigator.userAgent, window.screen.height, window.screen.width)
 
-    function checkConsent() {
-        try {
-            if (!window.dataLayer) return true;
-            for (let ev of window.dataLayer) {
-                if (ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
-            }
-            return false
-        } catch {
-            console.log("something went wrong when getting consent.")
-            return true;
-        }
-
-    }
-
     const sendData = async () => {
-
-        if (!checkConsent()) {
-            console.log("Not sending because missing user consent.")
-        }
         if (window.sessionEvents_) {
             window.sessionEvents_.forEach(event => {
                 EVENTS.push({
@@ -489,7 +470,7 @@ function startTracking() {
 
                 });
                 if (debugMode) {
-                    console.log("sending events",analytics )
+                    console.log("sending events", analytics)
                     return
                 }
                 navigator.sendBeacon(API_ENDPOINT, analytics);
