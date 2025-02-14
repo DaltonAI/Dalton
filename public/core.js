@@ -293,7 +293,7 @@
         const observer = new MutationObserver(() => {
             experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
             window.dalton.failed_bandits = experiments.filter(exp => !exp.done).map(exp => exp.bandit.id)
-            log(window)
+            log(window.dalton)
             if (experiments.filter(exp => !exp.done).length === 0) {
                 window.dalton.failed_bandits = null
                 log("Done with all experiments.")
@@ -337,7 +337,7 @@
         }
     }
 
-    let checker  = setInterval(setCookies, 1000);
+    let checker = setInterval(setCookies, 1000);
 
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
@@ -348,6 +348,12 @@
                 removeStyle(hidingStyle)
                 return
             }
+            if (!session.ids || session.ids.length === 0) {
+                console.log("Will not start tracking here.")
+                removeStyle(hidingStyle)
+                return
+            }
+
             window.dalton.data = session.ids
             window.dalton.sessionId = session.session_id
             window.dalton.session = session
@@ -355,6 +361,7 @@
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
             log(`Filtered ${session.data.length} experiment(s) for page ${window.location.pathname}`)
+            window.dalton.isRelevantPage = session.data.length > 0
             if (session.data) {
                 runExperiments(session.data)
             }
@@ -385,6 +392,10 @@ function startTracking() {
         }
         if (EVENTS.length > 0 && EVENTS[-1] === event) {
             console.log("Detected duplicate event.")
+            return
+        }
+        if (!window.dalton.isRelevantPage && (eventType === "scroll" || eventType === "click")) {
+            return
         }
         EVENTS.push(event);
     }
@@ -472,6 +483,7 @@ function startTracking() {
                 });
                 if (debugMode) {
                     console.log("sending events", analytics)
+                    EVENTS.length = 0;
                     return
                 }
                 navigator.sendBeacon(API_ENDPOINT, analytics);
@@ -557,7 +569,6 @@ function startTracking() {
         if (scrollTimeout) {
             clearTimeout(scrollTimeout);
         }
-
         scrollTimeout = setTimeout(() => {
             const scrollDepth = window.scrollY;
             const pageHeight = document.documentElement.scrollHeight;
@@ -577,15 +588,20 @@ function startTracking() {
     } else {
         document._IS_TRACKING = true
         document.ab_listeners = []
-        document.addEventListener("click", clickListener);
-        document.addEventListener("scroll", scrollListener);
-        document.ab_listeners.push(scrollListener)
-        document.ab_listeners.push(clickListener)
+        if (window.dalton.isRelevantPage) {
+            document.addEventListener("click", clickListener);
+            document.addEventListener("scroll", scrollListener);
+            document.ab_listeners.push(scrollListener)
+            document.ab_listeners.push(clickListener)
+        }
+
+
     }
 
     setInterval(sendData, 5000); // Send data every 4 seconds
 
     trackEvent("page_view", {page_url: window.location.pathname});
+    sendData().then()
 
     document.ab_listeners = []
 
