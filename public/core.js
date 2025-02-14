@@ -381,7 +381,7 @@ function startTracking() {
         // Parse screen width
         const screenWidth = parseInt(sw, 10);
         const screenHeight = parseInt(sh, 10);
-
+        console.log("screen width", screenWidth, screenHeight)
         // Determine device type
         let deviceType = null;
         if (!isNaN(screenWidth) && !isNaN(screenHeight)) {
