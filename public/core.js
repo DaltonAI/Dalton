@@ -50,6 +50,36 @@
         !debugMode || console.debug(statement)
     }
 
+    function generateSessionID() {
+        // Non-personal attributes that will be part of the session ID
+        const nav = window.navigator;
+        const screen = window.screen;
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const randomPart = Math.random().toString(36).substring(2, 15); // Random string part for uniqueness
+        const timestamp = Date.now(); // Timestamp for uniqueness
+
+        // Combine the attributes to create a unique, temporary session ID
+        const rawSessionID = [
+            nav.userAgent, // Browser user agent (not personal)
+            screen.width,  // Screen width
+            screen.height, // Screen height
+            timezone,      // Timezone
+            timestamp,     // Current timestamp
+            randomPart     // Random value to avoid predictable IDs
+        ].join('-'); // Join parts with hyphen
+
+        // Generate a pseudo-UUID style session ID (looks like a UUID)
+        const pseudoUUID = rawSessionID
+            .split('-')
+            .map(str => str.substring(0, 8))  // Limit each part to 8 characters
+            .join('-'); // Join again with hyphen
+
+        return pseudoUUID;
+    }
+
+    console.log(generateSessionID())
+    return
+
     function applyStyles(selector, style) {
         const styleElement = document.createElement("style");
         styleElement.innerHTML = `${selector} { ${style} }`;
@@ -411,7 +441,6 @@ function startTracking() {
         try {
             if (!window.dataLayer) return true;
             for (let ev of window.dataLayer) {
-                console.log("consent", ev)
                 if (ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
             }
             return false
