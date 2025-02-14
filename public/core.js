@@ -306,7 +306,7 @@
 
     window.dalton = {
         deviceId: deviceId, customerId: customerId,
-        debugMode: debugMode, failed_bandits: null
+        debugMode: debugMode, failed_bandits: null, consent: false
     }
 
     function checkConsent() {
@@ -333,10 +333,11 @@
                 console.log("setting device cookie.")
                 setCookie(DEVICE_KEY, window.dalton.deviceId, 100 * 24 * 60 * 60 * 1000);
             }
+            clearInterval(checker)
         }
     }
 
-    setInterval(setCookies, 1000);
+    let checker  = setInterval(setCookies, 1000);
 
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
