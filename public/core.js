@@ -307,7 +307,7 @@
 
     window.dalton = {
         deviceId: deviceId, customerId: customerId,
-        debugMode: debugMode, failed_bandits: null, consent:
+        debugMode: debugMode, failed_bandits: null
     }
 
     // Synchronize data fetch and DOM readiness
