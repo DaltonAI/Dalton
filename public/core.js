@@ -338,7 +338,7 @@
 
 function startTracking() {
     const customerId = window.dalton.customerId
-    const sessionId = window.dalton.customerId
+    const sessionId = window.dalton.sessionId
     const debugMode = window.dalton.debugMode
 
     const EVENTS = []; // Local array to store events
