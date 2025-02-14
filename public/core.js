@@ -409,7 +409,7 @@ function startTracking() {
 
     function checkConsent() {
         if (!window.dataLayer) return true;
-        for (let ev in window.dataLayer){
+        for (let ev of window.dataLayer){
             console.log(ev)
             if(ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
         }
