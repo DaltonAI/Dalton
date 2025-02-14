@@ -304,7 +304,7 @@
         experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
     }
 
-    window.dalton = {deviceId: deviceId, customerId: customerId, sessionId: sessionId, debugMode: debugMode }
+    window.dalton = {deviceId: deviceId, customerId: customerId, debugMode: debugMode }
 
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
@@ -316,6 +316,7 @@
                 return
             }
             window.dalton.data = session.ids
+            window.dalton.sessionId = session.session_id
             log(session);
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
