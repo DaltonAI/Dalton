@@ -408,12 +408,17 @@ function startTracking() {
     } = detectBrowserAndDevice(window.navigator.userAgent, window.screen.height, window.screen.width)
 
     function checkConsent() {
-        if (!window.dataLayer) return true;
-        for (let ev of window.dataLayer){
-            console.log(ev)
-            if(ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
+        try {
+            if (!window.dataLayer) return true;
+            for (let ev of window.dataLayer) {
+                console.log("consent", ev)
+                if (ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
+            }
+            return false
+        } catch {
+            console.log("something went wrong when getting consent.")
+            return true;
         }
-        return false
 
     }
 
