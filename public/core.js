@@ -155,7 +155,7 @@
                     setCookie(SESSION_KEY, r, SESSION_TIMEOUT);
                     resolve(r);
                 }).catch(() => {
-                console.log("Could not create new session.");
+                console.error("Could not create new session.");
                 resolve();
             });
 
@@ -181,7 +181,6 @@
             elements = document.querySelectorAll('*');
         }
         for (const element of elements) {
-            console.log(element.innerHTML.trim().toLowerCase())
             if (element.innerHTML.trim().toLowerCase() === textToFind.toLowerCase()) {
                 element.innerHTML = newText;
                 log(`Text changed in element: ${newText}`);
@@ -285,7 +284,7 @@
                 return handleTextBandit(experiment)
             }
         } catch (err) {
-            console.log(err)
+            console.error(err)
             return false;
         }
     }
@@ -356,7 +355,7 @@ function startTracking() {
         EVENTS.push(event);
     }
 
-    function detectBrowserAndDevice(userAgent, sw, sh) {
+    function detectBrowserAndDevice(userAgent, sh, sw) {
         // Browser detection rules
         const browsers = [
             {name: "Chrome", regex: /Chrome|CriOS/},
@@ -381,7 +380,6 @@ function startTracking() {
         // Parse screen width
         const screenWidth = parseInt(sw, 10);
         const screenHeight = parseInt(sh, 10);
-        console.log("screen width", screenWidth, screenHeight)
         // Determine device type
         let deviceType = null;
         if (!isNaN(screenWidth) && !isNaN(screenHeight)) {
