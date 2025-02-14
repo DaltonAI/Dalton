@@ -350,6 +350,7 @@
             }
             if (!session.ids || session.ids.length === 0) {
                 console.log("Will not start tracking here.")
+                removeStyle(hidingStyle)
                 return
             }
 
