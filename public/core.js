@@ -293,8 +293,10 @@
         experiments = experiments.map(v => ({...v, done: false}))
         const observer = new MutationObserver(() => {
             experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
-            console.log(experiments.filter(exp => !exp.done).length)
+            window.dalton.failed_bandits = experiments.filter(exp => !exp.done).length
+            log(window)
             if (experiments.filter(exp => !exp.done).length === 0) {
+                window.dalton.failed_bandits = null
                 log("Done with all experiments.")
                 observer.disconnect();
             }
@@ -303,7 +305,10 @@
         experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
     }
 
-    window.dalton = {deviceId: deviceId, customerId: customerId, debugMode: debugMode }
+    window.dalton = {
+        deviceId: deviceId, customerId: customerId,
+        debugMode: debugMode, failed_bandits: null, consent:
+    }
 
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
@@ -345,7 +350,6 @@ function startTracking() {
 
     // Helper function to track events
     function trackEvent(eventType, eventData) {
-        console.log(eventType, eventData);
         const event = {
             session_id: sessionId, event_type: eventType, event_data: eventData, timestamp: new Date().toISOString(),
         }
@@ -403,9 +407,22 @@ function startTracking() {
         deviceType
     } = detectBrowserAndDevice(window.navigator.userAgent, window.screen.height, window.screen.width)
 
+    function checkConsent() {
+        if (!window.dataLayer) return true;
+        for (let ev in window.dataLayer){
+            console.log(ev)
+            if(ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
+        }
+        return false
+
+    }
+
     const sendData = async () => {
         if (debugMode) {
             return
+        }
+        if (!checkConsent()) {
+            console.log("Not sending because missing user consent.")
         }
         if (window.sessionEvents_) {
             window.sessionEvents_.forEach(event => {
@@ -425,6 +442,7 @@ function startTracking() {
                     customer_id: customerId,
                     device_type: deviceType,
                     device_id: window.dalton.deviceId,
+                    failures: window.dalton.failed_bandits,
                     ids: window.dalton.data,
                     session_info: {
                         referrer: document.referrer || "direct",
@@ -546,7 +564,7 @@ function startTracking() {
         document.ab_listeners.push(clickListener)
     }
 
-    setInterval(sendData, 2000); // Send data every 3 seconds
+    setInterval(sendData, 5000); // Send data every 4 seconds
 
     trackEvent("page_view", {page_url: window.location.pathname});
 
@@ -559,6 +577,8 @@ function startTracking() {
 
     window.removeEventListener("beforeunload", sendData);
     window.addEventListener("beforeunload", sendData);
+    window.removeEventListener("visibilitychange ", sendData);
+    window.addEventListener("visibilitychange ", sendData);
     document.ab_listeners.push(sendData)
 
 
