@@ -499,7 +499,8 @@ function startTracking() {
 
                 });
                 if (debugMode) {
-                    console.log("sending events", analytics)
+                    console.log("sending events")
+                    console.log(analytics)
                     EVENTS.length = 0;
                     return
                 }
