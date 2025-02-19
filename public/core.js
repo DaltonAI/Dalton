@@ -62,9 +62,11 @@
     }
 
     function removeStyle(style) {
-        console.log("Removing style.")
         const head = document.getElementsByTagName("head")[0];
-        head.removeChild(style);
+        try {
+            head.removeChild(style);
+        } catch {
+        }
     }
 
     let hidingStyle = applyStyles('.dalton-no-flicker', 'opacity: 0;');
@@ -400,8 +402,8 @@ function startTracking() {
     const sessionId = window.dalton.sessionId
     const debugMode = window.dalton.debugMode
 
-    const EVENTS = []; // Local array to store events
-    const API_ENDPOINT = "https://track.getdalton.com/api/track"; // Replace with your API endpoint
+    const EVENTS = [];
+    const API_ENDPOINT = "https://track.getdalton.com/api/track";
 
     // Helper function to track events
     function trackEvent(eventType, eventData) {
@@ -410,7 +412,7 @@ function startTracking() {
             timestamp: new Date().toISOString(),
             relevant_page: window.dalton.isRelevantPage
         }
-        if(debugMode)
+        if (debugMode)
             console.log(event)
         if (EVENTS.length > 0 && EVENTS[-1] === event) {
             console.log("Detected duplicate event.")
