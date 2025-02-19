@@ -253,6 +253,21 @@
 
     }
 
+    function handleHideBandit(experiment) {
+        log(experiment.bandit.content.elements)
+        for (let hideLocation of experiment.bandit.content.elements) {
+            log(`Finding element with ${hideLocation.query}`)
+            let element = document.querySelector(hideLocation.query);
+            if (element) {
+                if (experiment.arm.remove) {
+                    element.remove();
+                }
+                return true
+            }
+        }
+        return false;
+    }
+
 
     function handleBlockingExperiment(experiment) {
         try {
@@ -281,6 +296,9 @@
             }
             if (experiment.bandit.type === 'TEXT') {
                 return handleTextBandit(experiment)
+            }
+            if (experiment.bandit.type === 'HIDE') {
+                return handleHideBandit(experiment)
             }
         } catch (err) {
             console.error(err)
@@ -388,13 +406,12 @@ function startTracking() {
     // Helper function to track events
     function trackEvent(eventType, eventData) {
         const event = {
-            session_id: sessionId, event_type: eventType, event_data: eventData, timestamp: new Date().toISOString(),
+            session_id: sessionId, event_type: eventType, event_data: eventData,
+            timestamp: new Date().toISOString(),
+            relevant_page: window.dalton.isRelevantPage
         }
         if (EVENTS.length > 0 && EVENTS[-1] === event) {
             console.log("Detected duplicate event.")
-            return
-        }
-        if (!window.dalton.isRelevantPage && (eventType === "scroll" || eventType === "click")) {
             return
         }
         EVENTS.push(event);
