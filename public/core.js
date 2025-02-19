@@ -79,7 +79,7 @@
     const observer = new MutationObserver(() => {
 
 
-        const elements = document.querySelectorAll('h1, h2, h3 , h4, p, div');
+        const elements = document.querySelectorAll('h1, h2, h3 , h4, h5, h6, p, div');
 
         const filtered = Array.from(elements).filter(heading => {
             // Check if all child nodes are either text or <br> elements
