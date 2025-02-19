@@ -254,12 +254,14 @@
     }
 
     function handleHideBandit(experiment) {
-        log(experiment.arm.elements)
-        for (let hideLocation of experiment.arm.elements) {
+        log(experiment.bandit.content.elements)
+        for (let hideLocation of experiment.bandit.content.elements) {
             log(`Finding element with ${hideLocation.query}`)
             let element = document.querySelector(hideLocation.query);
             if (element) {
-                element.remove();
+                if (experiment.arm.remove) {
+                    element.remove();
+                }
                 return true
             }
         }
