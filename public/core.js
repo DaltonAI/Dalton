@@ -410,6 +410,8 @@ function startTracking() {
             timestamp: new Date().toISOString(),
             relevant_page: window.dalton.isRelevantPage
         }
+        if(debugMode)
+            console.log(event)
         if (EVENTS.length > 0 && EVENTS[-1] === event) {
             console.log("Detected duplicate event.")
             return
