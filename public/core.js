@@ -617,7 +617,6 @@ function startTracking() {
             document.ab_listeners.push(clickListener)
         }
 
-
     }
 
     setInterval(sendData, 5000); // Send data every 4 seconds
