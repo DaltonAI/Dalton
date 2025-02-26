@@ -212,12 +212,20 @@
             if (!experiment.bandit.content.source) {
                 if (experiment.arm.text_content) {
                     log(`Doing full replace of ${experiment.arm.text_content}`)
-                    search[0].textContent = experiment.arm.text_content
+                    if (experiment.bandit.content.all) {
+                        for (let s of search) {
+                            s.textContent = experiment.arm.text_content
+                        }
+                    } else search[0].textContent = experiment.arm.text_content
                     return true
                 }
                 if (experiment.arm.inner_html) {
                     log(`Doing full replace of ${experiment.arm.inner_html}`)
-                    search[0].innerHTML = experiment.arm.inner_html
+                    if (experiment.bandit.content.all) {
+                        for (let s of search) {
+                            s.innerHTML = experiment.arm.inner_html
+                        }
+                    } else search[0].innerHTML = experiment.arm.inner_html
                     return true
                 }
             }
