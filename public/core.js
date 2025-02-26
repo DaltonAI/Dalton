@@ -332,10 +332,12 @@
     function checkConsent() {
         try {
             if (!window.dataLayer) return true;
+            let consentMode = false
             for (let ev of window.dataLayer) {
                 if (ev[0] === 'consent' && ev[2].analytics_storage === 'granted') return true
+                if (ev[0] === 'consent') consentMode = true
             }
-            return false
+            return !consentMode
         } catch {
             console.log("something went wrong when getting consent.")
             return true;
