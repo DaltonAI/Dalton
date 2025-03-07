@@ -81,9 +81,12 @@
 
         const elements = document.querySelectorAll('h1, h2, h3 , h4, h5, h6, p, div');
 
-        const filtered = Array.from(elements).filter(heading => {
+        const filtered = Array.from(elements).filter(element => {
+            if (element.tagName === "DIV" && element.childNodes.length === 0) {
+                return false;
+            }
             // Check if all child nodes are either text or <br> elements
-            return Array.from(heading.childNodes).every(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && (node.tagName === "BR" || node.tagName === "SPAN")));
+            return Array.from(element.childNodes).every(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && (node.tagName === "BR" || node.tagName === "SPAN")));
         });
 
         for (let element of filtered) {
