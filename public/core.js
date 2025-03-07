@@ -88,8 +88,6 @@
             // Check if all child nodes are either text or <br> elements
             return Array.from(element.childNodes).every(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && (node.tagName === "BR" || node.tagName === "SPAN")));
         });
-        if(debugMode)
-            console.log(filtered)
 
         for (let element of filtered) {
             element.classList.add("dalton-no-flicker");
