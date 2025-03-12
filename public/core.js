@@ -329,7 +329,7 @@
 
         // Track the last time we processed experiments to throttle execution
         let lastProcessTime = 0;
-        const THROTTLE_TIME = 50; // ms
+        const THROTTLE_TIME = 500; // ms
 
         const observer = new MutationObserver(() => {
             const now = Date.now();
