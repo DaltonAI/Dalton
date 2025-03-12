@@ -336,6 +336,9 @@
             if (now - lastProcessTime < THROTTLE_TIME) {
                 return
             }
+            lastProcessTime = now
+            if(debugMode)
+                console.log(`Trying to run experiment after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
             window.dalton.failed_bandits = experiments.filter(exp => !exp.done).map(exp => exp.bandit.id)
             log(window.dalton)
