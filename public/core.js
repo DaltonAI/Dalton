@@ -1,6 +1,7 @@
 (function () {
 
     // If navigating to the same page, don't re-run
+    const startTime = new Date().getTime() / 1000;
     let currentPage = window.location.pathname;
     if (document._ABCurrentPage === currentPage) return;
     document._ABCurrentPage = currentPage;
@@ -93,6 +94,9 @@
             element.classList.add("dalton-no-flicker");
         }
     });
+
+    if(debugMode)
+        console.log(`Starting observer after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
     observer.observe(document.documentElement, {childList: true, subtree: true});
 
 
@@ -321,7 +325,17 @@
 
     function runExperiments(experiments) {
         experiments = experiments.map(v => ({...v, done: false}))
+
+
+        // Track the last time we processed experiments to throttle execution
+        let lastProcessTime = 0;
+        const THROTTLE_TIME = 50; // ms
+
         const observer = new MutationObserver(() => {
+            const now = Date.now();
+            if (now - lastProcessTime < THROTTLE_TIME) {
+                return
+            }
             experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
             window.dalton.failed_bandits = experiments.filter(exp => !exp.done).map(exp => exp.bandit.id)
             log(window.dalton)
@@ -372,9 +386,14 @@
 
     let checker = setInterval(setCookies, 1000);
 
+    if(debugMode)
+        console.log(`Starting session promise after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
+
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
         .then(([session]) => {
+            if(debugMode)
+                console.log(`Got session after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
             if (!session || (!session.customer.enabled && !debugMode)) {
                 log(session);
                 log("Stopping AB test script.");
@@ -395,13 +414,16 @@
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
             log(`Filtered ${session.data.length} experiment(s) for page ${window.location.pathname}`)
             window.dalton.isRelevantPage = session.data.length > 0
+            if(debugMode)
+                console.log(`Start running experiments after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
             if (session.data) {
                 runExperiments(session.data)
             }
+            if(debugMode)
+                console.log(`Removing style after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
             removeStyle(hidingStyle)
             if (!demoMode && !noTracking)
                 startTracking();
-            console.log("Done.")
         })
         .catch(err => {
             console.error('Error in script execution:', err);
@@ -570,13 +592,6 @@ function startTracking() {
             }
         });
 
-        const wixAddToCart = document.querySelectorAll('button[data-hook*="add-to-cart"], button[data-hook*="buy-now-button"]');
-        if (wixAddToCart) {
-            console.log("Detected WIX add to cart buttons")
-            wixAddToCart.forEach(addToCartButton => addToCartButton.addEventListener("click", function () {
-                trackEvent("add_to_cart", {page_url: pageUrl});
-            }))
-        }
     }
 
     function clickListener(e) {
