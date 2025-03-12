@@ -329,7 +329,7 @@
 
         // Track the last time we processed experiments to throttle execution
         let lastProcessTime = 0;
-        const THROTTLE_TIME = 500; // ms
+        const THROTTLE_TIME = 100; // ms
 
         const observer = new MutationObserver(() => {
             const now = Date.now();
@@ -387,13 +387,13 @@
     let checker = setInterval(setCookies, 1000);
 
     if(debugMode)
-        console.log(`Starting session promise after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
+        console.log(`Starting session promise after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
 
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
         .then(([session]) => {
             if(debugMode)
-                console.log(`Got session after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
+                console.log(`Got session after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             if (!session || (!session.customer.enabled && !debugMode)) {
                 log(session);
                 log("Stopping AB test script.");
@@ -414,13 +414,14 @@
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
             log(`Filtered ${session.data.length} experiment(s) for page ${window.location.pathname}`)
             window.dalton.isRelevantPage = session.data.length > 0
+
             if(debugMode)
-                console.log(`Start running experiments after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
+                console.log(`Start running experiments after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             if (session.data) {
                 runExperiments(session.data)
             }
             if(debugMode)
-                console.log(`Removing style after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
+                console.log(`Removing style after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             removeStyle(hidingStyle)
             if (!demoMode && !noTracking)
                 startTracking();
