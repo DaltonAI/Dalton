@@ -23,12 +23,25 @@
     SESSION_KEY += `_${urlParams.get("customer_id")}`;
     let sessionId = null;
 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return JSON.parse(decodeURIComponent(parts.pop().split(';').shift()));
+    }
+
+    function setCookie(name, data, maxAge) {
+        const encodedData = encodeURIComponent(JSON.stringify(data));
+        // Encode for safety
+        document.cookie = `${name}=${encodedData}; max-age=${maxAge}; path=/; secure; samesite=strict`;
+    }
+
+
     if (!customerId) {
         console.log("No customer ID error.");
         return;
     }
 
-    if (!debugMode && !demoMode && sampleRate) {
+    if (!debugMode && !demoMode && !getCookie(SESSION_KEY) && sampleRate) {
         if (Math.random() > sampleRate) {
             console.log("Skipping this session.");
             return;
@@ -136,18 +149,6 @@
         return;
     }
 
-
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return JSON.parse(decodeURIComponent(parts.pop().split(';').shift()));
-    }
-
-    function setCookie(name, data, maxAge) {
-        const encodedData = encodeURIComponent(JSON.stringify(data));
-        // Encode for safety
-        document.cookie = `${name}=${encodedData}; max-age=${maxAge}; path=/; secure; samesite=strict`;
-    }
 
     let deviceId = getCookie(DEVICE_KEY);
     if (!deviceId) {
