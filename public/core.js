@@ -27,7 +27,7 @@
         console.log("No customer ID error.");
         return;
     }
-
+    console.log(`Sample rate: ${sampleRate}`);
     if (sampleRate) {
         if (Math.random() > sampleRate) {
             console.log("Skipping this session.");
