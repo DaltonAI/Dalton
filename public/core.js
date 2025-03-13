@@ -18,16 +18,21 @@
     const scriptUrl = document.currentScript.src;
     const urlParams = new URLSearchParams(new URL(scriptUrl).search);
     const customerId = parseInt(urlParams.get("customer_id"));
+    const sampleRate = parseFloat(urlParams.get("sample"));
+
     SESSION_KEY += `_${urlParams.get("customer_id")}`;
     let sessionId = null;
 
     if (!customerId) {
         console.log("No customer ID error.");
-        Promise.all([waitForDom])
-            .then(() => {
-                document.body.style.opacity = '1';
-            })
         return;
+    }
+
+    if (!debugMode && sampleRate) {
+        if (Math.random() > sampleRate) {
+            console.log("Skipping this session.");
+            return;
+        }
     }
 
     if (debugMode) {
@@ -95,7 +100,7 @@
         }
     });
 
-    if(debugMode)
+    if (debugMode)
         console.log(`Starting observer after ${(new Date().getTime() / 1000 - startTime).toFixed(1)}s`)
     observer.observe(document.documentElement, {childList: true, subtree: true});
 
@@ -337,7 +342,7 @@
                 return
             }
             lastProcessTime = now
-            if(debugMode)
+            if (debugMode)
                 console.log(`Trying to run experiment after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             experiments = experiments.filter(exp => !exp.done).map(v => ({...v, done: handleExperiment(v)}))
             window.dalton.failed_bandits = experiments.filter(exp => !exp.done).map(exp => exp.bandit.id)
@@ -389,13 +394,13 @@
 
     let checker = setInterval(setCookies, 1000);
 
-    if(debugMode)
+    if (debugMode)
         console.log(`Starting session promise after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
 
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
         .then(([session]) => {
-            if(debugMode)
+            if (debugMode)
                 console.log(`Got session after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             if (!session || (!session.customer.enabled && !debugMode)) {
                 log(session);
@@ -418,12 +423,12 @@
             log(`Filtered ${session.data.length} experiment(s) for page ${window.location.pathname}`)
             window.dalton.isRelevantPage = session.data.length > 0
 
-            if(debugMode)
+            if (debugMode)
                 console.log(`Start running experiments after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             if (session.data) {
                 runExperiments(session.data)
             }
-            if(debugMode)
+            if (debugMode)
                 console.log(`Removing style after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             removeStyle(hidingStyle)
             if (!demoMode && !noTracking)
