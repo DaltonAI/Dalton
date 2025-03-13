@@ -28,7 +28,7 @@
         return;
     }
 
-    if (!debugMode && sampleRate) {
+    if (sampleRate) {
         if (Math.random() > sampleRate) {
             console.log("Skipping this session.");
             return;
