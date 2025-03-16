@@ -289,8 +289,7 @@
     }
 
     function handleHideBandit(experiment) {
-        log(experiment.bandit.content.elements)
-        for (let hideLocation of experiment.bandit.content.elements) {
+        for (let hideLocation of experiment.bandit.content.sections) {
             log(`Finding element with ${hideLocation.query}`)
             let element = document.querySelector(hideLocation.query);
             if (element) {
