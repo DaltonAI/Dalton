@@ -289,15 +289,16 @@
     }
 
     function handleHideBandit(experiment) {
+        let found = []
         for (let hideLocation of experiment.arm.sections) {
             log(`Finding element with ${hideLocation.query}`)
             let element = document.querySelector(hideLocation.query);
             if (element) {
                 element.remove();
-                return true
+                found.push(true)
             }
         }
-        return false;
+        return (found.length > 0 && found.every(x => x))
     }
 
 
