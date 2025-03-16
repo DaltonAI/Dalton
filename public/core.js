@@ -14,6 +14,7 @@
     const urlParams2 = new URLSearchParams(queryString);
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
+    let slowDown = parseInt(urlParams2.get('slow') || 0);
     let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
     const scriptUrl = document.currentScript.src;
     const urlParams = new URLSearchParams(new URL(scriptUrl).search);
@@ -23,12 +24,25 @@
     SESSION_KEY += `_${urlParams.get("customer_id")}`;
     let sessionId = null;
 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return JSON.parse(decodeURIComponent(parts.pop().split(';').shift()));
+    }
+
+    function setCookie(name, data, maxAge) {
+        const encodedData = encodeURIComponent(JSON.stringify(data));
+        // Encode for safety
+        document.cookie = `${name}=${encodedData}; max-age=${maxAge}; path=/; secure; samesite=strict`;
+    }
+
+
     if (!customerId) {
         console.log("No customer ID error.");
         return;
     }
 
-    if (!debugMode && !demoMode && sampleRate) {
+    if (!debugMode && !demoMode && !getCookie(SESSION_KEY) && sampleRate) {
         if (Math.random() > sampleRate) {
             console.log("Skipping this session.");
             return;
@@ -85,14 +99,23 @@
     const observer = new MutationObserver(() => {
 
 
-        const elements = document.querySelectorAll('h1, h2, h3 , h4, h5, h6, p, div');
+        const elements = document.querySelectorAll('h1, h2, h3 , h4, h5, h6, p, div, a');
 
         const filtered = Array.from(elements).filter(element => {
             if (element.tagName === "DIV" && element.childNodes.length === 0) {
                 return false;
             }
-            // Check if all child nodes are either text or <br> elements
-            return Array.from(element.childNodes).every(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && (node.tagName === "BR" || node.tagName === "SPAN")));
+            const isNavElement = element.closest('nav, .navbar, .navigation, .menu, .nav-menu, #main-menu');
+            if (isNavElement) {
+                return false;
+            }
+            const rect = element.getBoundingClientRect();
+            const isAboveFold = rect.top < window.innerHeight;
+            if (!isAboveFold) {
+                return false;
+            }
+            // Check if all child nodes are either text or <br>, <a> elements
+            return Array.from(element.childNodes).every(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && (node.tagName === "BR" || node.tagName === "SPAN" || node.tagName === "A")));
         });
 
         for (let element of filtered) {
@@ -137,18 +160,6 @@
     }
 
 
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return JSON.parse(decodeURIComponent(parts.pop().split(';').shift()));
-    }
-
-    function setCookie(name, data, maxAge) {
-        const encodedData = encodeURIComponent(JSON.stringify(data));
-        // Encode for safety
-        document.cookie = `${name}=${encodedData}; max-age=${maxAge}; path=/; secure; samesite=strict`;
-    }
-
     let deviceId = getCookie(DEVICE_KEY);
     if (!deviceId) {
         deviceId = crypto.randomUUID();
@@ -166,7 +177,9 @@
                 method: "POST", body: JSON.stringify({customer_id: customerId})
             }).then(response => response.json())
                 .then(r => {
-                    resolve(r);
+                    if (slowDown)
+                        setTimeout(() => resolve(r), 2000)
+                    else resolve(r);
                 }).catch(() => {
                 console.error("Could not create new session.");
                 resolve();
@@ -276,14 +289,11 @@
     }
 
     function handleHideBandit(experiment) {
-        log(experiment.bandit.content.elements)
-        for (let hideLocation of experiment.bandit.content.elements) {
+        for (let hideLocation of experiment.arm.sections) {
             log(`Finding element with ${hideLocation.query}`)
             let element = document.querySelector(hideLocation.query);
             if (element) {
-                if (experiment.arm.remove) {
-                    element.remove();
-                }
+                element.remove();
                 return true
             }
         }
