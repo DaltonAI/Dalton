@@ -105,7 +105,7 @@
             if (element.tagName === "DIV" && element.childNodes.length === 0) {
                 return false;
             }
-            const isNavElement = element.closest('nav, .navbar, .navigation, .menu, header, .nav-menu, #main-menu');
+            const isNavElement = element.closest('nav, .navbar, .navigation, .menu, .nav-menu, #main-menu');
             if (isNavElement) {
                 return false;
             }
