@@ -14,6 +14,7 @@
     const urlParams2 = new URLSearchParams(queryString);
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
+    let slowDown = parseInt(urlParams2.get('slow') || 0);
     let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
     const scriptUrl = document.currentScript.src;
     const urlParams = new URLSearchParams(new URL(scriptUrl).search);
@@ -176,7 +177,9 @@
                 method: "POST", body: JSON.stringify({customer_id: customerId})
             }).then(response => response.json())
                 .then(r => {
-                    resolve(r);
+                    if (slowDown)
+                        setTimeout(() => resolve(r), 2000)
+                    else resolve(r);
                 }).catch(() => {
                 console.error("Could not create new session.");
                 resolve();
