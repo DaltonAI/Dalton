@@ -98,14 +98,23 @@
     const observer = new MutationObserver(() => {
 
 
-        const elements = document.querySelectorAll('h1, h2, h3 , h4, h5, h6, p, div');
+        const elements = document.querySelectorAll('h1, h2, h3 , h4, h5, h6, p, div, a');
 
         const filtered = Array.from(elements).filter(element => {
             if (element.tagName === "DIV" && element.childNodes.length === 0) {
                 return false;
             }
-            // Check if all child nodes are either text or <br> elements
-            return Array.from(element.childNodes).every(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && (node.tagName === "BR" || node.tagName === "SPAN")));
+            const isNavElement = element.closest('nav, .navbar, .navigation, .menu, header, .nav-menu, #main-menu');
+            if (isNavElement) {
+                return false;
+            }
+            const rect = element.getBoundingClientRect();
+            const isAboveFold = rect.top < window.innerHeight;
+            if (!isAboveFold) {
+                return false;
+            }
+            // Check if all child nodes are either text or <br>, <a> elements
+            return Array.from(element.childNodes).every(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && (node.tagName === "BR" || node.tagName === "SPAN" || node.tagName === "A")));
         });
 
         for (let element of filtered) {
