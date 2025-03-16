@@ -293,9 +293,7 @@
             log(`Finding element with ${hideLocation.query}`)
             let element = document.querySelector(hideLocation.query);
             if (element) {
-                if (experiment.arm.remove) {
-                    element.remove();
-                }
+                element.remove();
                 return true
             }
         }
