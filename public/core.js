@@ -447,6 +447,7 @@
             }
             // send custom event to GA if possible
             if (window.dataLayer) {
+                log("GA array exists:")
                 log(window.dataLayer)
                 window.dataLayer.push(['event', 'dalton', {'baseline': window.dalton.baseline}])
             }
