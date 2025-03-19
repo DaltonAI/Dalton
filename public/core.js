@@ -15,11 +15,12 @@
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
     let slowDown = parseInt(urlParams2.get('slow') || 0);
+    const forceIds = urlParams2.get("ids")?.split('-').map(id => parseInt(id));
     let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
     const scriptUrl = document.currentScript.src;
     const urlParams = new URLSearchParams(new URL(scriptUrl).search);
     const customerId = parseInt(urlParams.get("customer_id"));
-    const forceIds = urlParams.get("ids")?.split('-').map(id => parseInt(id));
+
     const sampleRate = parseFloat(urlParams.get("sample"));
 
     SESSION_KEY += `_${urlParams.get("customer_id")}`;
