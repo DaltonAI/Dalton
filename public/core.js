@@ -410,6 +410,9 @@
 
     let checker = setInterval(setCookies, 500);
 
+    function gtagDalton(){dataLayer.push(arguments);}
+
+
     if (debugMode)
         console.log(`Starting session promise after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
 
@@ -449,7 +452,7 @@
             if (window.dataLayer) {
                 log("GA array exists:")
                 log(window.dataLayer)
-                window.dataLayer.push(['event', 'dalton', {'baseline': window.dalton.baseline}])
+                gtagDalton('event', 'dalton', {'baseline': window.dalton.baseline})
             }
 
             if (debugMode)
