@@ -340,8 +340,10 @@
     }
 
     function runExperiments(experiments) {
-        experiments = experiments.map(v => ({...v, done: false}))
-
+        experiments = experiments.map(v => ({...v, done: !experiment.arm}))
+        window.dalton.baseline = experiments.filter(e => !e.done).length === 0
+        if (window.dalton.baseline)
+            return
 
         // Track the last time we processed experiments to throttle execution
         let lastProcessTime = 0;
