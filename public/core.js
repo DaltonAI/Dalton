@@ -340,7 +340,7 @@
     }
 
     function runExperiments(experiments) {
-        experiments = experiments.map(v => ({...v, done: !experiment.arm}))
+        experiments = experiments.map(v => ({...v, done: !v.arm}))
         window.dalton.baseline = experiments.filter(e => !e.done).length === 0
         if (window.dataLayer)
             window.dataLayer.push(['event', 'dalton', {'baseline': window.dalton.baseline}])
