@@ -19,6 +19,7 @@
     const scriptUrl = document.currentScript.src;
     const urlParams = new URLSearchParams(new URL(scriptUrl).search);
     const customerId = parseInt(urlParams.get("customer_id"));
+    const forceIds = urlParams.get("ids")?.split('-').map(id => parseInt(id));
     const sampleRate = parseFloat(urlParams.get("sample"));
 
     SESSION_KEY += `_${urlParams.get("customer_id")}`;
@@ -51,6 +52,7 @@
 
     if (debugMode) {
         console.log("Debug mode enabled")
+        console.log(forceIds)
     }
 
     if (demoMode) {
@@ -169,12 +171,12 @@
 
     const getSession = new Promise(resolve => {
         let session = getCookie(SESSION_KEY);
-        if (session && !debugMode && !demoMode) {
+        if (session && !debugMode && !demoMode && !forceIds) {
             console.log("existing session")
             resolve(session);
         } else {
-            fetch("https://track.getdalton.com/api/session", {
-                method: "POST", body: JSON.stringify({customer_id: customerId})
+            fetch("https://track-dev.getdalton.com/api/session", {
+                method: "POST", body: JSON.stringify({customer_id: customerId, ids: forceIds})
             }).then(response => response.json())
                 .then(r => {
                     if (slowDown)
