@@ -176,7 +176,7 @@
             console.log("existing session")
             resolve(session);
         } else {
-            fetch("https://track-dev.getdalton.com/api/session", {
+            fetch("https://track.getdalton.com/api/session", {
                 method: "POST", body: JSON.stringify({customer_id: customerId, ids: forceIds})
             }).then(response => response.json())
                 .then(r => {
@@ -345,8 +345,6 @@
     function runExperiments(experiments) {
         experiments = experiments.map(v => ({...v, done: !v.arm}))
         window.dalton.baseline = experiments.filter(e => !e.done).length === 0
-        if (window.dataLayer)
-            window.dataLayer.push(['event', 'dalton', {'baseline': window.dalton.baseline}])
         if (window.dalton.baseline)
             return
 
@@ -410,7 +408,7 @@
         }
     }
 
-    let checker = setInterval(setCookies, 1000);
+    let checker = setInterval(setCookies, 500);
 
     if (debugMode)
         console.log(`Starting session promise after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
@@ -435,6 +433,7 @@
             window.dalton.data = session.ids
             window.dalton.sessionId = session.session_id
             window.dalton.session = session
+            window.dalton.baseline = false
             log(session);
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
@@ -446,6 +445,12 @@
             if (session.data) {
                 runExperiments(session.data)
             }
+            // send custom event to GA if possible
+            if (window.dataLayer) {
+                log(window.dataLayer)
+                window.dataLayer.push(['event', 'dalton', {'baseline': window.dalton.baseline}])
+            }
+
             if (debugMode)
                 console.log(`Removing style after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             removeStyle(hidingStyle)
