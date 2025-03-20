@@ -272,7 +272,7 @@
 
     function handleSectionBandit(experiment) {
         log(experiment.arm.sections)
-        let succes = true
+        let success = true
         for (let sectionLocation of experiment.arm.sections) {
             log(`Finding section with ${sectionLocation.query}`)
             let section = document.querySelector(sectionLocation.query);
@@ -286,9 +286,9 @@
                     parent.appendChild(section);
                 }
             }
-            else succes = false
+            else success = false
         }
-        return succes;
+        return success;
 
     }
 
