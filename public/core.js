@@ -454,7 +454,7 @@
             if (window.dataLayer) {
                 log("GA array exists:")
                 log(window.dataLayer)
-                window.dalton.baseline ? gtagDalton('event', 'dalton_control') : gtagDalton('event', 'dalton_optimized', {'baseline': window.dalton.baseline})
+                window.dalton.baseline ? gtagDalton('event', 'dalton_control') : gtagDalton('event', 'dalton_optimized')
 
             }
 
