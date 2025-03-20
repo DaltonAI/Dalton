@@ -272,6 +272,7 @@
 
     function handleSectionBandit(experiment) {
         log(experiment.arm.sections)
+        let succes = true
         for (let sectionLocation of experiment.arm.sections) {
             log(`Finding section with ${sectionLocation.query}`)
             let section = document.querySelector(sectionLocation.query);
@@ -284,10 +285,10 @@
                     // If the target index is out of bounds, append the section at the end
                     parent.appendChild(section);
                 }
-                return true
             }
+            else succes = false
         }
-        return false;
+        return succes;
 
     }
 
