@@ -411,7 +411,7 @@
     let checker = setInterval(setCookies, 500);
 
     function gtagDalton() {
-        dataLayer.push(arguments);
+        window.dataLayer.push(arguments);
     }
 
 
