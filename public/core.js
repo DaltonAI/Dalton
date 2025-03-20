@@ -15,10 +15,12 @@
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
     let slowDown = parseInt(urlParams2.get('slow') || 0);
+    const forceIds = urlParams2.get("ids")?.split('-').map(id => parseInt(id));
     let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
     const scriptUrl = document.currentScript.src;
     const urlParams = new URLSearchParams(new URL(scriptUrl).search);
     const customerId = parseInt(urlParams.get("customer_id"));
+
     const sampleRate = parseFloat(urlParams.get("sample"));
 
     SESSION_KEY += `_${urlParams.get("customer_id")}`;
@@ -51,6 +53,7 @@
 
     if (debugMode) {
         console.log("Debug mode enabled")
+        console.log(forceIds)
     }
 
     if (demoMode) {
@@ -169,12 +172,12 @@
 
     const getSession = new Promise(resolve => {
         let session = getCookie(SESSION_KEY);
-        if (session && !debugMode && !demoMode) {
+        if (session && !debugMode && !demoMode && !forceIds) {
             console.log("existing session")
             resolve(session);
         } else {
             fetch("https://track.getdalton.com/api/session", {
-                method: "POST", body: JSON.stringify({customer_id: customerId})
+                method: "POST", body: JSON.stringify({customer_id: customerId, ids: forceIds})
             }).then(response => response.json())
                 .then(r => {
                     if (slowDown)
@@ -269,6 +272,7 @@
 
     function handleSectionBandit(experiment) {
         log(experiment.arm.sections)
+        let success = true
         for (let sectionLocation of experiment.arm.sections) {
             log(`Finding section with ${sectionLocation.query}`)
             let section = document.querySelector(sectionLocation.query);
@@ -281,10 +285,10 @@
                     // If the target index is out of bounds, append the section at the end
                     parent.appendChild(section);
                 }
-                return true
             }
+            else success = false
         }
-        return false;
+        return success;
 
     }
 
@@ -340,8 +344,10 @@
     }
 
     function runExperiments(experiments) {
-        experiments = experiments.map(v => ({...v, done: false}))
-
+        experiments = experiments.map(v => ({...v, done: !v.arm}))
+        window.dalton.baseline = experiments.filter(e => !e.done).length === 0
+        if (window.dalton.baseline)
+            return
 
         // Track the last time we processed experiments to throttle execution
         let lastProcessTime = 0;
@@ -403,7 +409,12 @@
         }
     }
 
-    let checker = setInterval(setCookies, 1000);
+    let checker = setInterval(setCookies, 500);
+
+    function gtagDalton() {
+        window.dataLayer.push(arguments);
+    }
+
 
     if (debugMode)
         console.log(`Starting session promise after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
@@ -428,6 +439,7 @@
             window.dalton.data = session.ids
             window.dalton.sessionId = session.session_id
             window.dalton.session = session
+            window.dalton.baseline = false
             log(session);
             sessionId = session.session_id
             session.data = session.data.filter(exp => exp.bandit.page === window.location.pathname)
@@ -439,6 +451,20 @@
             if (session.data) {
                 runExperiments(session.data)
             }
+            // send custom event to GA if possible
+            if (window.dataLayer) {
+                log("GA array exists:")
+                log(window.dataLayer)
+                if (typeof ga !== 'undefined') {
+                    gtagDalton('set', 'dalton_session_type', window.dalton.baseline ? "control" : "optimized");
+                } else {
+                    gtagDalton('set', {
+                        'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
+                    });
+                    window.dalton.baseline ? gtagDalton('event', 'dalton_control'): gtagDalton('event', 'dalton_baseline')
+                }
+            }
+
             if (debugMode)
                 console.log(`Removing style after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             removeStyle(hidingStyle)
