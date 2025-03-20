@@ -455,10 +455,10 @@
                 log("GA array exists:")
                 log(window.dataLayer)
                 if (typeof ga !== 'undefined') {
-                    gtagDalton('set', 'dalton', window.dalton.baseline ? "control" : "optimized");
+                    gtagDalton('set', 'dalton_session_type', window.dalton.baseline ? "control" : "optimized");
                 } else {
                     gtagDalton('set', 'user_properties', {
-                        'dalton': window.dalton.baseline ? "control" : "optimized"
+                        'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
                     });
                 }
             }
