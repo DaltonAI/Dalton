@@ -454,8 +454,13 @@
             if (window.dataLayer) {
                 log("GA array exists:")
                 log(window.dataLayer)
-                window.dalton.baseline ? gtagDalton('event', 'dalton_control') : gtagDalton('event', 'dalton_optimized')
-
+                if (typeof ga !== 'undefined') {
+                    gtagDalton('set', 'dalton', window.dalton.baseline ? "control" : "optimized");
+                } else {
+                    gtagDalton('set', 'user_properties', {
+                        'dalton': window.dalton.baseline ? "control" : "optimized"
+                    });
+                }
             }
 
             if (debugMode)
