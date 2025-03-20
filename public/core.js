@@ -457,9 +457,10 @@
                 if (typeof ga !== 'undefined') {
                     gtagDalton('set', 'dalton_session_type', window.dalton.baseline ? "control" : "optimized");
                 } else {
-                    gtagDalton('set', 'user_properties', {
+                    gtagDalton('set', {
                         'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
                     });
+                    window.dalton.baseline ? gtagDalton('event', 'dalton_control'): gtagDalton('event', 'dalton_baseline')
                 }
             }
 
