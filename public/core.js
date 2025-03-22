@@ -461,7 +461,7 @@
                     gtagDalton('set', {
                         'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
                     });
-                    window.dalton.baseline ? gtagDalton('event', 'dalton_control'): gtagDalton('event', 'dalton_baseline')
+                    window.dalton.baseline ? gtagDalton('event', 'dalton_control'): gtagDalton('event', 'dalton_optimized')
                 }
             }
 
