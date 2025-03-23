@@ -285,8 +285,7 @@
                     // If the target index is out of bounds, append the section at the end
                     parent.appendChild(section);
                 }
-            }
-            else success = false
+            } else success = false
         }
         return success;
 
@@ -455,14 +454,20 @@
             if (window.dataLayer) {
                 log("GA array exists:")
                 log(window.dataLayer)
-                if (typeof ga !== 'undefined') {
-                    gtagDalton('set', 'dalton_session_type', window.dalton.baseline ? "control" : "optimized");
-                } else {
-                    gtagDalton('set', {
-                        'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
-                    });
-                    window.dalton.baseline ? gtagDalton('event', 'dalton_control'): gtagDalton('event', 'dalton_optimized')
-                }
+                gtagDalton('set', {
+                    'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
+                });
+                gtagDalton('set',
+                    'dalton_session', window.dalton.baseline ? "control" : "optimized"
+                );
+                gtagDalton('set', 'user_properties', {
+                    'dalton': window.dalton.baseline ? "control" : "optimized"
+                });
+                gtagDalton('event', window.dalton.baseline ? "dalton_control" : "dalton_optimized");
+                gtagDalton('event', 'dalton', {
+                    'type': window.dalton.baseline ? "control" : "optimized",
+                });
+
             }
 
             if (debugMode)
