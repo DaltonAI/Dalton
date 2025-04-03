@@ -659,6 +659,8 @@ function startTracking() {
             textContent: target.textContent.trim().slice(0, 50) || null, // Text content (limited to 50 chars)
             href: clickableElement.tagName.toLowerCase() === "a" ? clickableElement.href : null, // Include href for links
         };
+        if (!window.dalton.isRelevantPage && !elementDetails.href)
+            return
 
         trackEvent("click", {x, y, target: targetDetails, page_url: pageUrl, details: elementDetails});
         // Send the tracking data immediately
@@ -690,11 +692,11 @@ function startTracking() {
         document._IS_TRACKING = true
         document.ab_listeners = []
         if (window.dalton.isRelevantPage) {
-            document.addEventListener("click", clickListener);
             document.addEventListener("scroll", scrollListener);
             document.ab_listeners.push(scrollListener)
-            document.ab_listeners.push(clickListener)
         }
+        document.addEventListener("click", clickListener);
+        document.ab_listeners.push(clickListener)
 
     }
 
