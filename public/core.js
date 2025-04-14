@@ -285,8 +285,7 @@
                     // If the target index is out of bounds, append the section at the end
                     parent.appendChild(section);
                 }
-            }
-            else success = false
+            } else success = false
         }
         return success;
 
@@ -453,16 +452,12 @@
             }
             // send custom event to GA if possible
             if (window.dataLayer) {
-                log("GA array exists:")
-                log(window.dataLayer)
-                if (typeof ga !== 'undefined') {
-                    gtagDalton('set', 'dalton_session_type', window.dalton.baseline ? "control" : "optimized");
-                } else {
-                    gtagDalton('set', {
-                        'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
-                    });
-                    window.dalton.baseline ? gtagDalton('event', 'dalton_control'): gtagDalton('event', 'dalton_baseline')
-                }
+                //gtagDalton('set', {'dalton_session_type': window.dalton.baseline ? "control" : "optimized"});
+                //gtagDalton('set','dalton_session', window.dalton.baseline ? "control" : "optimized");
+                //gtagDalton('set', 'user_properties', {'dalton': window.dalton.baseline ? "control" : "optimized"});
+                //gtagDalton('event', window.dalton.baseline ? "dalton_control" : "dalton_optimized");
+                //gtagDalton('event', 'dalton', {'type': window.dalton.baseline ? "control" : "optimized",});
+
             }
 
             if (debugMode)
@@ -654,6 +649,8 @@ function startTracking() {
             textContent: target.textContent.trim().slice(0, 50) || null, // Text content (limited to 50 chars)
             href: clickableElement.tagName.toLowerCase() === "a" ? clickableElement.href : null, // Include href for links
         };
+        if (!window.dalton.isRelevantPage && !elementDetails.href)
+            return
 
         trackEvent("click", {x, y, target: targetDetails, page_url: pageUrl, details: elementDetails});
         // Send the tracking data immediately
@@ -685,11 +682,11 @@ function startTracking() {
         document._IS_TRACKING = true
         document.ab_listeners = []
         if (window.dalton.isRelevantPage) {
-            document.addEventListener("click", clickListener);
             document.addEventListener("scroll", scrollListener);
             document.ab_listeners.push(scrollListener)
-            document.ab_listeners.push(clickListener)
         }
+        document.addEventListener("click", clickListener);
+        document.ab_listeners.push(clickListener)
 
     }
 
