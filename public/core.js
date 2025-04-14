@@ -452,21 +452,11 @@
             }
             // send custom event to GA if possible
             if (window.dataLayer) {
-                log("GA array exists:")
-                log(window.dataLayer)
-                gtagDalton('set', {
-                    'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
-                });
-                gtagDalton('set',
-                    'dalton_session', window.dalton.baseline ? "control" : "optimized"
-                );
-                gtagDalton('set', 'user_properties', {
-                    'dalton': window.dalton.baseline ? "control" : "optimized"
-                });
-                gtagDalton('event', window.dalton.baseline ? "dalton_control" : "dalton_optimized");
-                gtagDalton('event', 'dalton', {
-                    'type': window.dalton.baseline ? "control" : "optimized",
-                });
+                //gtagDalton('set', {'dalton_session_type': window.dalton.baseline ? "control" : "optimized"});
+                //gtagDalton('set','dalton_session', window.dalton.baseline ? "control" : "optimized");
+                //gtagDalton('set', 'user_properties', {'dalton': window.dalton.baseline ? "control" : "optimized"});
+                //gtagDalton('event', window.dalton.baseline ? "dalton_control" : "dalton_optimized");
+                //gtagDalton('event', 'dalton', {'type': window.dalton.baseline ? "control" : "optimized",});
 
             }
 
