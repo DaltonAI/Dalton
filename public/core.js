@@ -1,21 +1,20 @@
 (function () {
-
-    // If navigating to the same page, don't re-run
     const startTime = new Date().getTime() / 1000;
     let currentPage = window.location.pathname;
     if (document._ABCurrentPage === currentPage) return;
     document._ABCurrentPage = currentPage;
-    console.log("Initializing AB test script...")
+    console.log("Initializing Dalton...")
     let SESSION_KEY = 'dalton_session';
     let DEVICE_KEY = "dalton_device"
-    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
+    const SESSION_TIMEOUT = 30 * 60 * 1000;
+
 
     const queryString = window.location.search;
     const urlParams2 = new URLSearchParams(queryString);
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
     let slowDown = parseInt(urlParams2.get('slow') || 0);
-    const forceIds = urlParams2.get("ids")?.split('-').map(id => parseInt(id));
+    const forceIds = urlParams2.get("ids")?.split('+') ;
     let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
     const scriptUrl = document.currentScript.src;
     const urlParams = new URLSearchParams(new URL(scriptUrl).search);
@@ -181,7 +180,7 @@
             }).then(response => response.json())
                 .then(r => {
                     if (slowDown)
-                        setTimeout(() => resolve(r), 2000)
+                        setTimeout(() => resolve(r), 1000)
                     else resolve(r);
                 }).catch(() => {
                 console.error("Could not create new session.");
@@ -452,18 +451,28 @@
             }
             // send custom event to GA if possible
             if (window.dataLayer) {
-                //gtagDalton('set', {'dalton_session_type': window.dalton.baseline ? "control" : "optimized"});
-                //gtagDalton('set','dalton_session', window.dalton.baseline ? "control" : "optimized");
-                //gtagDalton('set', 'user_properties', {'dalton': window.dalton.baseline ? "control" : "optimized"});
-                //gtagDalton('event', window.dalton.baseline ? "dalton_control" : "dalton_optimized");
-                //gtagDalton('event', 'dalton', {'type': window.dalton.baseline ? "control" : "optimized",});
+                log("GA array exists:")
+                log(window.dataLayer)
+                gtagDalton('set', {
+                    'dalton_session_type': window.dalton.baseline ? "control" : "optimized"
+                });
+                gtagDalton('set',
+                    'dalton_session', window.dalton.baseline ? "control" : "optimized"
+                );
+                gtagDalton('set', 'user_properties', {
+                    'dalton': window.dalton.baseline ? "control" : "optimized"
+                });
+                gtagDalton('event', window.dalton.baseline ? "dalton_control" : "dalton_optimized");
+                gtagDalton('event', 'dalton', {
+                    'type': window.dalton.baseline ? "control" : "optimized",
+                });
 
             }
 
             if (debugMode)
                 console.log(`Removing style after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             removeStyle(hidingStyle)
-            if (!demoMode && !noTracking)
+            if (!demoMode && !noTracking && !forceIds)
                 startTracking();
         })
         .catch(err => {
