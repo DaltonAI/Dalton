@@ -12,13 +12,18 @@
     const queryString = window.location.search;
     const urlParams2 = new URLSearchParams(queryString);
     let debugMode = parseInt(urlParams2.get('debug_mode') || 0);
+    let disable = parseInt(urlParams2.get('disable_dalton') || 0);
     let demoMode = parseInt(urlParams2.get('demo_mode') || 0);
     let slowDown = parseInt(urlParams2.get('slow') || 0);
-    const forceIds = urlParams2.get("ids")?.split('+') ;
+    let forceIds = urlParams2.get("ids")?.split('+');
     let noTracking = parseInt(urlParams2.get('disable_tracking')) || 0;
     const scriptUrl = document.currentScript.src;
     const urlParams = new URLSearchParams(new URL(scriptUrl).search);
     const customerId = parseInt(urlParams.get("customer_id"));
+
+    if (disable)
+        return
+
 
     const sampleRate = parseFloat(urlParams.get("sample"));
 
@@ -104,6 +109,12 @@
         const elements = document.querySelectorAll('h1, h2, h3 , h4, h5, h6, p, div, a');
 
         const filtered = Array.from(elements).filter(element => {
+            if (element.classList.contains("dalton-no-flicker")) {
+                return false;
+            }
+            if (element.closest('[x-data="window.sjCookieBanner"]')) {
+                return false;
+            }
             if (element.tagName === "DIV" && element.childNodes.length === 0) {
                 return false;
             }
@@ -121,6 +132,8 @@
         });
 
         for (let element of filtered) {
+            if (debugMode)
+                console.log(element)
             element.classList.add("dalton-no-flicker");
         }
     });
@@ -341,6 +354,27 @@
         }
     }
 
+    function scrollToExperiment(experiments) {
+        if (experiments[0].bandit?.content?.query) {
+            const element = document.querySelector(experiments[0].bandit?.content?.query);
+            if (!element) return; // Safety check if element doesn't exist
+
+            const rect = element.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+            // Calculate the position that will center the element
+            // Subtract half the viewport height to center it
+            const viewportHeight = window.innerHeight;
+            const elementHeight = rect.height;
+            const centerPosition = rect.top + scrollTop - (viewportHeight / 2) + (elementHeight / 2);
+
+            window.scrollTo({
+                top: centerPosition,
+                behavior: "smooth"
+            });
+        }
+    }
+
     function runExperiments(experiments) {
         experiments = experiments.map(v => ({...v, done: !v.arm}))
         window.dalton.baseline = experiments.filter(e => !e.done).length === 0
@@ -417,6 +451,25 @@
     if (debugMode)
         console.log(`Starting session promise after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
 
+    window.addEventListener('message', function (event) {
+        if (event.data.type !== 'daltonUpdate') {
+            return;
+        }
+        console.log('Message received:', event.data);
+        fetch("https://track.getdalton.com/api/session", {
+            method: "POST", body: JSON.stringify({customer_id: customerId, ids: event.data.ids})
+        }).then(response => response.json())
+            .then(session => {
+                console.log(session)
+                if (session.data) {
+                    runExperiments(session.data)
+                    if (forceIds && forceIds.length === 1)
+                        scrollToExperiment(session.data)
+                }
+            })
+    }, false);
+
+
     // Synchronize data fetch and DOM readiness
     Promise.all([getSession])
         .then(([session]) => {
@@ -429,7 +482,7 @@
                 return
             }
             if (!session.ids || session.ids.length === 0) {
-                console.log("Will not start tracking here.")
+                console.log("No experiments to run.")
                 removeStyle(hidingStyle)
                 return
             }
@@ -472,6 +525,8 @@
             if (debugMode)
                 console.log(`Removing style after ${(new Date().getTime() / 1000 - startTime).toFixed(2)}s`)
             removeStyle(hidingStyle)
+            if (forceIds && forceIds.length === 1)
+                scrollToExperiment(session.data)
             if (!demoMode && !noTracking && !forceIds)
                 startTracking();
         })
@@ -644,19 +699,76 @@ function startTracking() {
 
     }
 
+    const getSelectorPath = (element) => {
+        const path = [];
+        let current = element;
+
+        while (current && current !== document.body && path.length < 4) {
+            let selector = current.tagName.toLowerCase();
+
+            // Add ID if available (most specific)
+            if (current.id) {
+                selector += `#${CSS.escape(current.id)}`;
+                path.unshift(selector);
+                break; // ID is unique, no need to go further
+            }
+
+            // Add classes if available
+            if (current.classList.length > 0) {
+                selector += `.${[...current.classList].filter(c => c !== "dalton-no-flicker").map(cls => CSS.escape(cls)).join('.')}`;
+            }
+
+            // Add data attributes that might be identifiers
+            const dataAttrs = [...current.attributes]
+                .filter(attr => attr.name.startsWith('data-'))
+                .map(attr => `[${CSS.escape(attr.name)}="${CSS.escape(attr.value)}"]`)
+                .join('');
+            selector += dataAttrs;
+
+            // Add position among siblings if still not unique
+            if (!current.id && current.classList && current.classList.length === 0 && !dataAttrs) {
+                const parent = current.parentElement;
+                if (parent && parent.children) {
+                    const siblings = [...parent.children];
+                    const sameTagSiblings = siblings.filter(s => s.tagName === current.tagName);
+
+                    if (sameTagSiblings.length > 1) {
+                        const index = sameTagSiblings.indexOf(current);
+                        selector += `:nth-of-type(${index + 1})`;
+                    }
+                }
+            }
+
+            path.unshift(selector);
+            current = current.parentElement;
+        }
+
+        return path.join(' > ');
+    };
+
     function clickListener(e) {
         const {pageX: x, pageY: y, target} = e;
 
-        const clickableElement = target.closest("button, a") || target;
+        const clickableElement = target.closest("button, a, [role='button'], [role='link'], [onclick]") || target;
         const targetDetails = target.tagName.toLowerCase();
         const pageUrl = window.location.pathname;
+        let selector = "none"
+        try {
+            selector = getSelectorPath(target)
+        } catch (error) {
+            console.log(error)
+        }
         // Element-specific details
         const elementDetails = {
-            tagName: target.tagName.toLowerCase(), // Tag name of clicked element
-            id: target.id || null, // ID if available
-            classList: [...target.classList].join(" ") || null, // Classes
-            textContent: target.textContent.trim().slice(0, 50) || null, // Text content (limited to 50 chars)
-            href: clickableElement.tagName.toLowerCase() === "a" ? clickableElement.href : null, // Include href for links
+            tagName: target.tagName.toLowerCase(),
+            id: target.id || null,
+            selector: selector,
+            classList: [...target.classList].filter(c => c !== "dalton-no-flicker").join(" ") || null,
+            textContent: target.textContent.trim().slice(0, 50) || null,
+            href: clickableElement.tagName.toLowerCase() === "a" ? clickableElement.href : null,
+            elementType: clickableElement.tagName.toLowerCase() === target.tagName.toLowerCase()
+                ? target.tagName.toLowerCase()
+                : `${target.tagName.toLowerCase()} in ${clickableElement.tagName.toLowerCase()}`
         };
         if (!window.dalton.isRelevantPage && !elementDetails.href)
             return
